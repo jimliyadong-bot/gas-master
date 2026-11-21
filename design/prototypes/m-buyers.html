@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>采购商与批次 · 管理员</title>
+<link rel="stylesheet" href="assets/tailwind.css?v=h5-layout-2">
+<link rel="stylesheet" href="assets/vendor/fontawesome/css/all.min.css">
+<style>
+  .m-page [hidden] { display: none !important; }
+
+  .board-hero { padding: 16px 18px; border-radius: 16px; background: linear-gradient(120deg, #173b69, #2a78d6); color: #fff; box-shadow: 0 10px 24px rgba(23,59,105,.25); }
+  .board-hero .hero-title { font-size: 13px; color: #d3e4fa; display: flex; align-items: center; gap: 6px; }
+  .board-hero .hero-tag { font-size: 12px; color: #d3e4fa; background: rgba(255,255,255,.15); border-radius: 999px; padding: 1px 10px; }
+  .board-metrics { display: grid; grid-template-columns: 1fr 1fr 1fr; margin-top: 14px; padding-top: 14px; border-top: 1px solid #ffffff30; }
+  .board-metrics > div + div { border-left: 1px solid #ffffff30; padding-left: 14px; }
+  .board-metrics span { display: block; color: #d3e4fa; font-size: 11px; }
+  .board-metrics b { display: block; margin-top: 3px; font-size: 17px; }
+  .board-metrics b.qty { font-size: 13px; line-height: 1.35; }
+
+  .batch-item { position: relative; }
+  .batch-item::before { content: ""; position: absolute; left: 0; top: 16px; bottom: 16px; width: 3px; border-radius: 999px; background: var(--accent, #2A78D6); }
+  .buyer-avatar { background: linear-gradient(135deg, #4F8FF2, #2A78D6); color: #fff; }
+</style>
+</head>
+<body data-shell="mobile" data-title="管理" data-tabbar="m" class="m-page min-h-screen">
+<main class="px-4 pt-3 space-y-3">
+
+  <div class="seg w-full" id="mainTabs">
+    <button class="on flex-1" data-tab="batch">采购批次</button>
+    <button class="flex-1" data-tab="buyer">采购商</button>
+  </div>
+
+  <div id="batchPane" class="space-y-3">
+    <button class="btn-primary btn-lg w-full" data-open="#batchSheet" data-new-batch><i class="fa-solid fa-plus"></i>登记采购批次</button>
+
+    <section class="board-hero">
+      <div class="flex items-center justify-between">
+        <p class="hero-title"><i class="fa-solid fa-boxes-stacked"></i>采购批次总览</p>
+        <span class="hero-tag" id="rangeLabel">今日</span>
+      </div>
+      <div class="board-metrics">
+        <div><span>采购批次</span><b id="batchCount">0</b></div>
+        <div><span>采购金额</span><b id="totalAmount">¥0</b></div>
+        <div><span>采购量</span><b id="totalQty" class="qty">—</b></div>
+      </div>
+    </section>
+
+    <section class="card p-3">
+      <div class="flex items-center gap-1.5 mb-2 text-xs font-semibold text-ink-500"><i class="fa-solid fa-filter text-brand-500"></i>筛选</div>
+      <div class="space-y-2">
+        <label class="block"><span class="text-xs text-ink-500">采购商</span><select id="buyerFilter" class="field"><option value="">全部采购商</option></select></label>
+        <label class="block"><span class="text-xs text-ink-500">时间</span><select id="dateFilter" class="field">
+          <option value="all">全部时间</option>
+          <option value="today">今日</option>
+          <option value="history">历史（今日之前）</option>
+          <option value="custom">自定义日期</option>
+        </select></label>
+        <label class="block" id="customDateWrap" hidden><span class="text-xs text-ink-500">指定采购日期</span><input id="batchFilterDate" type="date" class="field"></label>
+        <div class="grid grid-cols-2 gap-2">
+          <label><span class="text-xs text-ink-500">付款状态</span><select id="paymentFilter" class="field"><option value="">全部</option><option value="unpaid">待付款 / 部分付款</option><option value="paid">已付清</option></select></label>
+          <label><span class="text-xs text-ink-500">票据状态</span><select id="invoiceFilter" class="field"><option value="">全部</option><option value="pending">待开票</option><option value="registered">已登记</option><option value="none">不需开票</option></select></label>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="px-4 pt-4 pb-2"><h2 class="font-semibold">采购批次</h2></div>
+      <ul class="divide-y divide-ink-100" id="batchList"></ul>
+    </section>
+  </div>
+
+  <div id="buyerPane" class="space-y-3" hidden>
+    <button class="btn-primary btn-lg w-full" data-open="#buyerSheet" data-new-buyer><i class="fa-solid fa-user-plus"></i>新增采购商</button>
+    <section class="card">
+      <div class="px-4 pt-4 pb-2 flex items-center justify-between"><h2 class="font-semibold">采购商</h2><span class="text-[11px] text-ink-500" id="buyerCount">0</span></div>
+      <ul class="divide-y divide-ink-100" id="buyerList"></ul>
+    </section>
+  </div>
+
+  <p class="px-1 text-[11px] leading-5 text-ink-500">采购批次记录采购计划、价格与结算；每次实际进气单独登记为库存批次，支持分次入库。库存差异在对应进气批次中调整。</p>
+</main>
+
+<div class="sheet" id="buyerSheet" role="dialog" aria-label="新增采购商">
+  <div class="flex items-center justify-between px-4 h-12 border-b border-ink-100"><b id="buyerFormTitle">新增采购商</b><button data-close aria-label="关闭"><i class="fa-solid fa-xmark text-ink-500"></i></button></div>
+  <form id="buyerForm" class="p-4 pb-8 space-y-3">
+    <label class="block"><span class="label">采购商名称</span><input id="buyerName" class="field h-11" required placeholder="公司或个人名称"></label>
+    <label class="block"><span class="label">联系人</span><input id="buyerContact" class="field h-11" placeholder="联系人姓名"></label>
+    <label class="block"><span class="label">联系电话</span><input id="buyerPhone" class="field h-11" inputmode="tel" placeholder="选填"></label>
+    <label class="block"><span class="label">库存预警阈值 · CNG（m³）</span><input id="buyerCngAlert" class="field h-11" type="number" min="0" step="0.01" placeholder="低于该值提示补货，选填"></label>
+    <label class="block"><span class="label">库存预警阈值 · LNG（kg）</span><input id="buyerLngAlert" class="field h-11" type="number" min="0" step="0.01" placeholder="低于该值提示补货，选填"></label>
+    <button class="btn-primary btn-lg w-full" type="submit">保存采购商</button>
+  </form>
+</div>
+<div class="sheet" id="batchSheet" role="dialog" aria-label="登记采购批次">
+  <div class="flex items-center justify-between px-4 h-12 border-b border-ink-100"><b id="batchFormTitle">登记采购批次</b><button data-close aria-label="关闭"><i class="fa-solid fa-xmark text-ink-500"></i></button></div>
+  <form id="batchForm" class="p-4 pb-8 space-y-3">
+    <label class="block"><span class="label">采购商</span><select id="batchBuyer" class="field h-11" required></select></label>
+    <div class="grid grid-cols-2 gap-3">
+      <label><span class="label">气种</span><select id="batchGas" class="field h-11"><option>CNG</option><option>LNG</option></select></label>
+      <label><span class="label">采购日期</span><input id="batchDate" class="field h-11" type="date" required></label>
+    </div>
+    <div class="grid grid-cols-2 gap-3">
+      <label><span class="label" id="batchQtyLabel">采购量（m³）</span><input id="batchQty" class="field h-11" type="number" min="0.01" step="0.01" required></label>
+      <label><span class="label" id="batchPriceLabel">单价（元 / m³）</span><input id="batchPrice" class="field h-11" type="number" min="0.01" step="0.01" required></label>
+    </div>
+    <div class="rounded-lg bg-page px-3 py-2 text-sm">批次金额：<b id="batchTotal">¥0.00</b></div>
+    <div class="grid grid-cols-2 gap-3">
+      <label><span class="label">付款状态</span><select id="batchPayment" class="field h-11"><option>待付款</option><option>部分付款</option><option>已付清</option></select></label>
+      <label><span class="label">票据状态</span><select id="batchInvoice" class="field h-11"><option>待开票</option><option>已登记</option><option>不需开票</option></select></label>
+    </div>
+    <label class="block"><span class="label">已登记付款金额（选填，元）</span><input id="batchPaidAmount" class="field h-11" type="number" min="0" step="0.01" placeholder="未登记则留空"></label>
+    <p id="receivedNote" class="text-xs text-ink-500" hidden>已有进气记录后，采购商、气种和采购量不可修改；库存差异请在对应进气批次中调整。</p>
+    <button class="btn-primary btn-lg w-full" type="submit">保存采购批次</button>
+  </form>
+</div>
+<div class="sheet" id="batchAdjustSheet" role="dialog" aria-modal="true" aria-label="调整批次库存">
+  <div class="flex items-center justify-between px-4 h-12 border-b border-ink-100"><b>调整进气批次库存</b><button data-close aria-label="关闭"><i class="fa-solid fa-xmark text-ink-500"></i></button></div>
+  <form id="batchAdjustForm" class="p-4 pb-8 space-y-3">
+    <p id="adjustBatchSummary" class="rounded-lg bg-page p-3 text-sm"></p>
+    <div><p class="text-xs text-ink-500">本进气批次调整记录</p><ul id="batchAdjustHistory" class="mt-1 text-xs text-ink-500"></ul></div>
+    <label class="block"><span class="label">调整方向</span><select id="adjustDirection" class="field h-11"><option value="increase">调增</option><option value="decrease">调减</option></select></label>
+    <label class="block"><span class="label" id="adjustQtyLabel">调整数量</span><input id="adjustQty" type="number" min="0.01" step="0.01" class="field h-11" required></label>
+    <label class="block"><span class="label">调整原因</span><input id="adjustReason" class="field h-11" maxlength="120" required placeholder="例如：盘点差异"></label>
+    <p class="text-xs text-ink-500">仅调整此进气批次；调减不得超过该批次已关联的本地账面库存。</p>
+    <button class="btn-primary btn-lg w-full" type="submit">保存调整</button>
+  </form>
+</div>
+<div class="sheet" id="receiptSheet" role="dialog" aria-modal="true" aria-label="登记本次进气">
+  <div class="flex items-center justify-between px-4 h-12 border-b border-ink-100"><b>登记本次进气</b><button data-close aria-label="关闭"><i class="fa-solid fa-xmark text-ink-500"></i></button></div>
+  <div class="p-4 pb-8 space-y-3">
+    <p id="receiptSummary" class="text-sm"></p>
+    <label class="block"><span class="label">本次进气量</span><input id="receiptQty" class="field h-11" type="number" min="0.01" step="0.01" required></label>
+    <p class="text-xs text-ink-500">本次进气单独形成库存批次并关联采购批次；数量不能超过待进气量。</p>
+    <button id="confirmReceipt" class="btn-primary btn-lg w-full" type="button">登记进气</button>
+  </div>
+</div>
+<script src="assets/js/common.js?v=h5-layout-2"></script>
+<script src="assets/js/owner-store.js"></script>
+<script>
+  (() => {
+  const today = OwnerStore.dateKey(new Date());
+  let data;
+  try { data = OwnerStore.read(); } catch (error) { toast(error.message); return; }
+  let range = 'today', currentTab = 'batch';
+  let editingBuyerId = null, editingBatchId = null, receiptOrder = null, adjustReceipt = null;
+  $('#batchDate').value = today;
+  function persist(next) {
+    try { OwnerStore.write(next); data = next; return true; }
+    catch (error) { toast(error.message); return false; }
+  }
+  const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]);
+  const statusTag = status => {
+    if (status === '已付清' || status === '已登记') return 'tag-ok';
+    if (['待付款', '部分付款', '待开票'].includes(status)) return 'tag-warn';
+    return 'tag-mute';
+  };
+  function render() {
+    $('#buyerCount').textContent = data.buyers.length;
+    $('#buyerList').innerHTML = data.buyers.map(b => `<li class="px-4 py-3 flex items-center gap-3"><span class="w-10 h-10 rounded-full buyer-avatar grid place-items-center"><i class="fa-solid fa-building"></i></span><span class="flex-1 min-w-0"><b class="block truncate text-sm">${escapeHtml(b.name)}</b><span class="text-xs text-ink-500">${escapeHtml(b.contact || '未填写联系人')} · ${escapeHtml(b.phone || '未填写电话')}</span></span><span class="text-[11px] text-ink-500">${data.batches.filter(x => x.buyerId === b.id).length} 批</span><button class="text-xs text-brand-600" data-edit-buyer="${escapeHtml(b.id)}">编辑</button></li>`).join('');
+    const formBuyer = $('#batchBuyer').value;
+    $('#batchBuyer').innerHTML = data.buyers.map(b => `<option value="${escapeHtml(b.id)}">${escapeHtml(b.name)}</option>`).join('');
+    if (data.buyers.some(b => b.id === formBuyer)) $('#batchBuyer').value = formBuyer;
+    const previousBuyer = $('#buyerFilter').value;
+    $('#buyerFilter').innerHTML = '<option value="">全部采购商</option>' + data.buyers.map(b => `<option value="${escapeHtml(b.id)}">${escapeHtml(b.name)}</option>`).join('');
+    $('#buyerFilter').value = data.buyers.some(b => b.id === previousBuyer) ? previousBuyer : '';
+    const selectedBuyer = $('#buyerFilter').value;
+    const filtered = data.batches.filter(b => {
+      const inRange = range === 'all' ? true : range === 'today' ? b.date === today : range === 'history' ? b.date < today : b.date === $('#batchFilterDate').value;
+      const payment = $('#paymentFilter').value;
+      const invoice = $('#invoiceFilter').value;
+      return inRange && (!selectedBuyer || b.buyerId === selectedBuyer) && (!payment || (payment === 'unpaid' ? ['待付款', '部分付款'].includes(b.payment) : b.payment === '已付清')) &&
+        (!invoice || b.invoice === { pending: '待开票', registered: '已登记', none: '不需开票' }[invoice]);
+    });
+    $('#dateFilter').value = range;
+    $('#customDateWrap').hidden = range !== 'custom';
+    $('#rangeLabel').textContent = range === 'custom' ? ($('#batchFilterDate').value || '自定义日期') : { all: '全部时间', today: '今日', history: '历史' }[range];
+    $('#batchCount').textContent = filtered.length;
+    $('#totalQty').textContent = ['CNG', 'LNG'].map(gas => `${gas} ${fmt(filtered.filter(b => b.gas === gas).reduce((sum, b) => sum + Number(b.qty), 0), 2)} ${gas === 'CNG' ? 'm³' : 'kg'}`).join(' / ');
+    $('#totalAmount').textContent = '¥' + fmt(filtered.reduce((sum, b) => sum + Number(b.qty) * Number(b.price), 0), 2);
+    $('#batchList').innerHTML = filtered.length ? filtered.slice().reverse().map(b => {
+      const buyer = data.buyers.find(x => x.id === b.buyerId);
+      const received = OwnerStore.receivedQty(data, b), remaining = OwnerStore.remainingQty(data, b);
+      const receiptStatus = received === 0 ? '待进气' : remaining > 0 ? '部分进气' : '已收齐';
+      const receiptStatusClass = { '待进气': 'tag-mute', '部分进气': 'tag-info', '已收齐': 'tag-ok' }[receiptStatus];
+      const unit = b.gas === 'LNG' ? 'kg' : 'm³';
+      const paidText = b.paidAmount == null ? '' : `<span class="text-[11px] text-ink-500 ml-auto">已付 ¥${fmt(b.paidAmount, 2)}</span>`;
+      const receipts = data.receipts.filter(item => item.purchaseBatchId === b.id);
+      const receiptDetail = receipts.length ? `<button type="button" class="mt-2 flex items-center gap-1 text-xs text-ink-500" data-toggle-receipts="${escapeHtml(b.id)}"><i class="fa-solid fa-chevron-right text-[10px]"></i>进气明细（${receipts.length} 笔）</button><ul class="mt-1 rounded-lg bg-page hidden" data-receipts="${escapeHtml(b.id)}">${receipts.map(item => {
+        const balance = OwnerStore.receiptInventory(data, item).balance;
+        return `<li class="px-3 py-2 flex items-center justify-between gap-2"><span class="min-w-0"><b class="block text-xs truncate">${escapeHtml(item.id)} · ${fmt(item.qty, 2)} ${unit} · 余量 ${fmt(balance, 2)} ${unit}</b><span class="text-[11px] text-ink-500">${new Date(item.receivedAt).toLocaleString('zh-CN', { hour12: false })}</span></span><button class="text-xs text-brand-600 shrink-0" data-adjust-receipt="${escapeHtml(item.id)}">调整</button></li>`;
+      }).join('')}</ul>` : '';
+      const receiptAction = remaining > 0 ? `<button class="text-xs text-brand-600" data-receipt-order="${escapeHtml(b.id)}">登记进气（余 ${fmt(remaining, 2)} ${unit}）</button>` : '';
+      return `<li class="batch-item px-4 py-3" style="--accent:${b.gas === 'LNG' ? '#5B4BD6' : '#0E9F7E'}">
+        <div class="flex items-start justify-between gap-3"><span class="min-w-0"><b class="block text-sm truncate">${escapeHtml(b.id)}${b.demo ? ' · 演示' : ''}</b><span class="block text-xs text-ink-500 mt-0.5">${escapeHtml(buyer ? buyer.name : '采购商已移除')} · ${escapeHtml(b.date)} · 采购 ${fmt(b.qty, 2)} ${unit}</span></span><span class="text-right shrink-0"><span class="${b.gas === 'LNG' ? 'tag-lng' : 'tag-cng'}">${escapeHtml(b.gas)}</span><b class="block text-sm mt-1">¥${fmt(b.qty * b.price, 2)}</b></span></div>
+        <div class="flex flex-wrap items-center gap-1.5 mt-2"><span class="${receiptStatusClass}">${receiptStatus} ${fmt(received, 2)}/${fmt(b.qty, 2)}</span><span class="${statusTag(b.payment)}">${escapeHtml(b.payment)}</span><span class="${statusTag(b.invoice)}">${escapeHtml(b.invoice)}</span>${paidText}</div>
+        ${receiptDetail}
+        <div class="flex items-center justify-between mt-2">${receiptAction || '<span></span>'}<button class="text-xs text-brand-600" data-edit-batch="${escapeHtml(b.id)}">查看 / 编辑</button></div>
+      </li>`;
+    }).join('') : '<li class="px-4 py-8 text-center text-sm text-ink-500">该时间范围暂无采购批次</li>';
+  }
+  $('#mainTabs').addEventListener('click', e => {
+    const button = e.target.closest('[data-tab]');
+    if (!button) return;
+    currentTab = button.dataset.tab;
+    $$('#mainTabs button').forEach(x => x.classList.toggle('on', x === button));
+    $('#batchPane').hidden = currentTab !== 'batch';
+    $('#buyerPane').hidden = currentTab !== 'buyer';
+  });
+  $('#dateFilter').addEventListener('change', () => {
+    range = $('#dateFilter').value;
+    $('#customDateWrap').hidden = range !== 'custom';
+    render();
+  });
+  $('#batchFilterDate').addEventListener('change', () => render());
+  ['buyerFilter', 'paymentFilter', 'invoiceFilter'].forEach(id => $('#' + id).addEventListener('change', render));
+  function openReceiptAdjust(receiptId) {
+    try { data = OwnerStore.read(); } catch (error) { return toast(error.message); }
+    const receipt = data.receipts.find(item => item.id === receiptId);
+    if (!receipt) return toast('进气记录不存在，请刷新后重试');
+    const batch = data.batches.find(item => item.id === receipt.purchaseBatchId);
+    const buyer = data.buyers.find(item => item.id === receipt.buyerId);
+    if (!buyer) return toast('采购商不存在，请先修正采购批次');
+    adjustReceipt = { ...receipt };
+    const unit = receipt.gas === 'LNG' ? 'kg' : 'm³';
+    $('#batchAdjustForm').reset();
+    $('#adjustBatchSummary').textContent = `${buyer.name} · ${batch ? batch.id + ' · ' : ''}${receipt.id} · ${receipt.gas} · 进气 ${fmt(receipt.qty, 2)} ${unit} · 账面余量 ${fmt(OwnerStore.receiptInventory(data, receipt).balance, 2)} ${unit}`;
+    const history = data.adjustments.filter(item => item.batchId === receipt.id && item.buyerId === receipt.buyerId && item.gas === receipt.gas).slice().reverse();
+    const list = $('#batchAdjustHistory');
+    list.replaceChildren();
+    if (!history.length) {
+      const empty = document.createElement('li');
+      empty.textContent = '暂无调整记录';
+      list.appendChild(empty);
+    }
+    history.forEach(item => {
+      const row = document.createElement('li');
+      row.className = 'mt-1';
+      row.textContent = `${new Date(item.createdAt).toLocaleString('zh-CN', { hour12: false })} · ${item.amount > 0 ? '+' : ''}${fmt(item.amount, 2)} ${unit} · ${item.reason}`;
+      list.appendChild(row);
+    });
+    $('#adjustQtyLabel').textContent = `调整数量（${unit}）`;
+    openLayer('#batchAdjustSheet');
+  }
+  document.addEventListener('click', e => {
+    const toggle = e.target.closest('[data-toggle-receipts]');
+    if (toggle) {
+      const list = toggle.parentElement.querySelector(`[data-receipts="${toggle.dataset.toggleReceipts}"]`);
+      if (list) list.classList.toggle('hidden');
+      return;
+    }
+    if (e.target.closest('[data-new-buyer]')) {
+      editingBuyerId = null;
+      $('#buyerFormTitle').textContent = '新增采购商';
+      $('#buyerForm').reset();
+      return;
+    }
+    if (e.target.closest('[data-new-batch]')) {
+      editingBatchId = null;
+      $('#batchFormTitle').textContent = '登记采购批次';
+      $('#batchForm').reset();
+      ['batchBuyer', 'batchGas', 'batchQty'].forEach(id => $('#' + id).disabled = false);
+      if ($('#buyerFilter').value) $('#batchBuyer').value = $('#buyerFilter').value;
+      $('#receivedNote').hidden = true;
+      $('#batchDate').value = today;
+      updateBatchUnit();
+      updateBatchTotal();
+      return;
+    }
+    const adjustButton = e.target.closest('[data-adjust-receipt]');
+    if (adjustButton) return openReceiptAdjust(adjustButton.dataset.adjustReceipt);
+    const receiptButton = e.target.closest('[data-receipt-order]');
+    if (receiptButton) {
+      const batch = data.batches.find(item => item.id === receiptButton.dataset.receiptOrder);
+      if (!batch) return toast('采购批次不存在，请刷新后重试');
+      receiptOrder = { ...batch };
+      const buyer = data.buyers.find(item => item.id === batch.buyerId);
+      const remaining = OwnerStore.remainingQty(data, batch);
+      $('#receiptSummary').textContent = `${buyer ? buyer.name : '采购商未找到'} · ${batch.id} · 待进气 ${fmt(remaining, 2)} ${batch.gas === 'LNG' ? 'kg' : 'm³'}`;
+      $('#receiptQty').max = remaining;
+      $('#receiptQty').value = remaining;
+      openLayer('#receiptSheet');
+      return;
+    }
+    const buyerButton = e.target.closest('[data-edit-buyer]');
+    if (buyerButton) {
+      const buyer = data.buyers.find(item => item.id === buyerButton.dataset.editBuyer);
+      if (!buyer) return;
+      editingBuyerId = buyer.id;
+      $('#buyerFormTitle').textContent = '编辑采购商';
+      $('#buyerName').value = buyer.name;
+      $('#buyerContact').value = buyer.contact || '';
+      $('#buyerPhone').value = buyer.phone || '';
+      $('#buyerCngAlert').value = buyer.alerts?.CNG ?? '';
+      $('#buyerLngAlert').value = buyer.alerts?.LNG ?? '';
+      openLayer('#buyerSheet');
+      return;
+    }
+    const batchButton = e.target.closest('[data-edit-batch]');
+    if (!batchButton) return;
+    const batch = data.batches.find(item => item.id === batchButton.dataset.editBatch);
+    if (!batch) return;
+    editingBatchId = batch.id;
+    $('#batchFormTitle').textContent = '编辑采购批次';
+    $('#batchBuyer').value = batch.buyerId;
+    $('#batchGas').value = batch.gas;
+    $('#batchDate').value = batch.date;
+    $('#batchQty').value = batch.qty;
+    $('#batchPrice').value = batch.price;
+    $('#batchPayment').value = batch.payment;
+    $('#batchInvoice').value = batch.invoice;
+    $('#batchPaidAmount').value = batch.paidAmount == null ? '' : batch.paidAmount;
+    const hasReceipts = OwnerStore.receivedQty(data, batch) > 0;
+    ['batchBuyer', 'batchGas', 'batchQty'].forEach(id => $('#' + id).disabled = hasReceipts);
+    $('#receivedNote').hidden = !hasReceipts;
+    updateBatchUnit();
+    updateBatchTotal();
+    openLayer('#batchSheet');
+  });
+  $('#buyerForm').addEventListener('submit', e => {
+    e.preventDefault();
+    const name = $('#buyerName').value.trim();
+    if (!name) return toast('请填写采购商名称');
+    const readAlert = id => {
+      const raw = $('#' + id).value;
+      if (raw === '') return null;
+      const value = Number(raw);
+      if (!Number.isFinite(value) || value < 0) { toast('预警阈值需为不小于 0 的数字'); return undefined; }
+      return value;
+    };
+    const cngAlert = readAlert('buyerCngAlert'), lngAlert = readAlert('buyerLngAlert');
+    if (cngAlert === undefined || lngAlert === undefined) return;
+    const values = { name, contact: $('#buyerContact').value.trim(), phone: $('#buyerPhone').value.trim(), alerts: { CNG: cngAlert, LNG: lngAlert } };
+    let latest;
+    try { latest = OwnerStore.read(); } catch (error) { return toast(error.message); }
+    if (editingBuyerId && !latest.buyers.some(item => item.id === editingBuyerId)) return toast('采购商已变更，请刷新后重试');
+    const next = { ...latest, buyers: latest.buyers.map(item => item.id === editingBuyerId ? { ...item, ...values } : item) };
+    if (!editingBuyerId) next.buyers.push({ id: 'B' + Date.now(), ...values });
+    if (!persist(next)) return;
+    editingBuyerId = null; $('#buyerFormTitle').textContent = '新增采购商';
+    render(); e.target.reset(); closeLayers(); toast('采购商已保存');
+  });
+  const updateBatchTotal = () => {
+    const total = Number($('#batchQty').value) * Number($('#batchPrice').value);
+    $('#batchTotal').textContent = '¥' + (Number.isFinite(total) ? total.toFixed(2) : '0.00');
+  };
+  const updateBatchUnit = () => {
+    const unit = $('#batchGas').value === 'LNG' ? 'kg' : 'm³';
+    $('#batchQtyLabel').textContent = `采购量（${unit}）`;
+    $('#batchPriceLabel').textContent = `单价（元 / ${unit}）`;
+  };
+  $('#batchGas').addEventListener('change', updateBatchUnit);
+  ['batchQty', 'batchPrice'].forEach(id => $('#' + id).addEventListener('input', updateBatchTotal));
+  $('#batchForm').addEventListener('submit', e => {
+    e.preventDefault();
+    const qty = Number($('#batchQty').value), price = Number($('#batchPrice').value);
+    if (!Number.isFinite(qty) || !Number.isFinite(price) || !(qty > 0) || !(price > 0) || !Number.isFinite(qty * price) || !$('#batchBuyer').value) return toast('请填写采购商、有效采购量和单价');
+    const paidInput = $('#batchPaidAmount').value;
+    const paidAmount = paidInput === '' ? null : Number(paidInput);
+    if (paidAmount !== null && (!Number.isFinite(paidAmount) || paidAmount < 0 || paidAmount > Math.round(qty * price * 100) / 100)) return toast('已登记付款金额不能超过批次金额');
+    const d = $('#batchDate').value;
+    const values = {
+      buyerId: $('#batchBuyer').value, gas: $('#batchGas').value, date: d, qty, price,
+      payment: $('#batchPayment').value, invoice: $('#batchInvoice').value, paidAmount
+    };
+    let latest;
+    try { latest = OwnerStore.read(); } catch (error) { return toast(error.message); }
+    if (!latest.buyers.some(buyer => buyer.id === values.buyerId)) return toast('采购商已变更，请重新选择');
+    const existing = editingBatchId && latest.batches.find(item => item.id === editingBatchId);
+    if (editingBatchId && !existing) return toast('采购批次已变更，请刷新后重试');
+    if (existing && OwnerStore.receivedQty(latest, existing) > 0 && (existing.gas !== values.gas || Number(existing.qty) !== values.qty || existing.buyerId !== values.buyerId)) return toast('已有进气记录，请重新查看；库存差异请登记调整');
+    const next = { ...latest, batches: latest.batches.map(item => item.id === editingBatchId ? { ...item, ...values } : item) };
+    if (!editingBatchId) next.batches.push({ id: 'PO-' + d.replaceAll('-', '') + '-' + Date.now(), ...values });
+    if (!persist(next)) return;
+    editingBatchId = null; $('#batchFormTitle').textContent = '登记采购批次';
+    render(); e.target.reset(); $('#batchDate').value = today; updateBatchTotal(); closeLayers(); toast('采购批次已登记');
+  });
+  $('#confirmReceipt').addEventListener('click', () => {
+    try { data = OwnerStore.confirmReceipt(receiptOrder.id, Number($('#receiptQty').value), receiptOrder); receiptOrder = null; render(); closeLayers(); toast('本次进气已登记'); }
+    catch (error) { toast(error.message); }
+  });
+  $('#batchAdjustForm').addEventListener('submit', e => {
+    e.preventDefault();
+    try {
+      data = OwnerStore.adjust(adjustReceipt.id, $('#adjustDirection').value, Number($('#adjustQty').value), $('#adjustReason').value, adjustReceipt);
+      adjustReceipt = null;
+      render();
+      closeLayers();
+      toast('进气批次库存调整已记录');
+    } catch (error) { toast(error.message); }
+  });
+  const params = new URLSearchParams(location.search);
+  if (['all', 'today', 'history', 'custom'].includes(params.get('range'))) range = params.get('range');
+  if (['unpaid', 'paid'].includes(params.get('payment'))) $('#paymentFilter').value = params.get('payment');
+  if (['pending', 'registered', 'none'].includes(params.get('invoice'))) $('#invoiceFilter').value = params.get('invoice');
+  render();
+  const adjustId = params.get('adjust');
+  const batchId = params.get('batch');
+  if (adjustId) {
+    const receipt = data.receipts.find(item => item.id === adjustId);
+    const batch = receipt && data.batches.find(item => item.id === receipt.purchaseBatchId);
+    if (receipt && batch) {
+      range = batch.date === today ? 'today' : batch.date < today ? 'history' : 'all';
+      render();
+      openReceiptAdjust(adjustId);
+    } else toast('未找到该进气批次');
+  } else if (batchId) {
+    const batch = data.batches.find(item => item.id === batchId);
+    if (batch) {
+      range = batch.date === today ? 'today' : batch.date < today ? 'history' : 'all';
+      render();
+      const button = Array.from(document.querySelectorAll('[data-edit-batch]')).find(item => item.dataset.editBatch === batchId);
+      if (button) button.click();
+    } else toast('未找到该采购批次');
+  }
+  window.addEventListener('storage', e => {
+    if (e.key === OwnerStore.key || e.key === null) {
+      try { data = OwnerStore.read(); render(); } catch (error) { toast(error.message); }
+    }
+  });
+  })();
+</script>
+</body>
+</html>

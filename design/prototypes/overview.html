@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="scroll-smooth">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>加气站批量采购系统 · 项目说明与原型总览</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="assets/tailwind.css">
+<link rel="stylesheet" href="assets/vendor/fontawesome/css/all.min.css">
+<style>
+  /* 手机预览：390×844 按 .65 缩放（一行 4 台） */
+  .phone { width: 390px; height: 844px; border: 0; transform: scale(.65); transform-origin: top left; }
+  .phone-screen { width: calc(390px * .65); height: calc(844px * .65); }
+  .bezel { background: linear-gradient(145deg, #3A4352, #12161E 40%, #2A313D); }
+  /* 后台预览：按容器宽度动态缩放（--s 由脚本写入） */
+  .desk-wrap { aspect-ratio: 1440 / 900; position: relative; overflow: hidden; }
+  .desk { position: absolute; top: 0; left: 0; width: 1440px; height: 900px; border: 0; transform: scale(var(--s, .4)); transform-origin: top left; }
+  .glow { background-image: radial-gradient(600px 300px at 15% 0%, rgba(42,120,214,.35), transparent 70%), radial-gradient(500px 280px at 90% 100%, rgba(14,159,126,.25), transparent 70%); }
+  .grid-bg { background-image: linear-gradient(rgba(255,255,255,.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.05) 1px, transparent 1px); background-size: 32px 32px; }
+</style>
+</head>
+<body class="bg-page">
+
+<!-- 顶部导航 -->
+<nav class="sticky top-0 z-40 bg-[#0B1424]/85 backdrop-blur border-b border-white/10 text-white">
+  <div class="max-w-[1280px] mx-auto px-8 h-14 flex items-center gap-8">
+    <a href="index.html" class="flex items-center gap-2.5 font-bold"><span class="w-8 h-8 rounded-lg bg-gradient-to-br from-brand-400 to-gas-cng grid place-items-center"><i class="fa-solid fa-arrow-left text-sm"></i></span>返回角色选择</a>
+    <div class="flex items-center gap-1 text-sm text-white/70">
+      <a href="#roles" class="px-3 h-8 rounded-md grid place-items-center hover:text-white hover:bg-white/10 transition">角色总览</a>
+      <a href="#path" class="px-3 h-8 rounded-md grid place-items-center hover:text-white hover:bg-white/10 transition">演示路径</a>
+      <a href="#mobile" class="px-3 h-8 rounded-md grid place-items-center hover:text-white hover:bg-white/10 transition">移动端 H5</a>
+      <a href="#admin-sec" class="px-3 h-8 rounded-md grid place-items-center hover:text-white hover:bg-white/10 transition">管理后台</a>
+    </div>
+    <div class="ml-auto flex items-center gap-2 text-sm">
+      <a href="../../docs/PRD.md" class="h-8 px-3 rounded-md flex items-center gap-1.5 text-white/80 hover:text-white hover:bg-white/10 transition"><i class="fa-solid fa-file-lines text-xs"></i>PRD</a>
+      <a href="../Flowchart.md" class="h-8 px-3 rounded-md flex items-center gap-1.5 text-white/80 hover:text-white hover:bg-white/10 transition"><i class="fa-solid fa-diagram-project text-xs"></i>流程图</a>
+      <a href="../specs/Design_Spec.md" class="h-8 px-3 rounded-md flex items-center gap-1.5 text-white/80 hover:text-white hover:bg-white/10 transition"><i class="fa-solid fa-palette text-xs"></i>设计规范</a>
+    </div>
+  </div>
+</nav>
+
+<!-- Hero -->
+<header id="top" class="relative overflow-hidden text-white bg-[#0B1424]">
+  <!-- 背景图：本地资源 assets/img/truck.jpg -->
+  <img src="assets/img/truck.jpg" alt="" class="absolute inset-0 w-full h-full object-cover opacity-30">
+  <div class="absolute inset-0 bg-gradient-to-r from-[#0B1424] via-[#0F2C5C]/90 to-[#0B1424]/40"></div>
+  <div class="absolute inset-0 grid-bg"></div>
+  <div class="relative max-w-[1280px] mx-auto px-8 pt-14 pb-28">
+    <span class="inline-flex items-center gap-2 h-7 px-3 rounded-full bg-white/10 ring-1 ring-white/15 text-xs text-white/85"><span class="dot bg-gas-cng"></span>需求重梳理 · 原型 v1.0</span>
+    <h1 class="text-5xl font-black mt-5 tracking-tight">加气站批量采购与销售记录 <span class="bg-gradient-to-r from-brand-300 to-[#5EE0BE] bg-clip-text text-transparent">业务原型</span></h1>
+    <p class="mt-4 text-white/75 max-w-3xl text-[15px] leading-7">服务批量采购客户，记录采购批次、付款、扫码销售和加气核销；按配置的站点库存或共享库存模式管理资源余量。</p>
+    <div class="flex flex-wrap gap-2.5 mt-6 text-sm">
+      <span class="h-9 px-4 rounded-lg bg-white/10 ring-1 ring-white/15 flex items-center gap-2"><i class="fa-solid fa-boxes-stacked text-brand-300"></i>批量采购与库存台账</span>
+      <span class="h-9 px-4 rounded-lg bg-white/10 ring-1 ring-white/15 flex items-center gap-2"><i class="fa-solid fa-qrcode text-[#5EE0BE]"></i>扫码支付与加气核销</span>
+      <span class="h-9 px-4 rounded-lg bg-white/10 ring-1 ring-white/15 flex items-center gap-2"><i class="fa-solid fa-file-invoice-dollar text-[#A79BFF]"></i>往来款与票据记录</span>
+    </div>
+    <dl class="mt-10 grid grid-cols-[1fr_1fr_1fr_1.6fr] max-w-3xl divide-x divide-white/10 rounded-xl bg-white/5 ring-1 ring-white/10 backdrop-blur">
+      <div class="px-6 py-4"><dt class="text-xs text-white/55">使用端</dt><dd class="text-3xl font-bold mt-1">4<span class="text-sm font-medium text-white/55 ml-1">端</span></dd></div>
+      <div class="px-6 py-4"><dt class="text-xs text-white/55">原型页面</dt><dd class="text-3xl font-bold mt-1" id="statPages">20<span class="text-sm font-medium text-white/55 ml-1">页</span></dd></div>
+      <div class="px-6 py-4"><dt class="text-xs text-white/55">库存模式</dt><dd class="text-lg font-bold mt-2.5 whitespace-nowrap">按站独立 / 共享</dd></div>
+      <div class="px-6 py-4"><dt class="text-xs text-white/55">支付方式</dt><dd class="text-lg font-bold mt-2.5 whitespace-nowrap">拉卡拉聚合<span class="text-sm font-medium text-white/55 ml-1">微信 / 支付宝 / 云闪付</span></dd></div>
+    </dl>
+  </div>
+</header>
+
+<main class="max-w-[1280px] mx-auto px-8 pb-10 space-y-16">
+
+  <!-- 角色总览：上浮压在 Hero 上 -->
+  <section id="roles" class="-mt-16 relative grid grid-cols-4 gap-4 scroll-mt-20"></section>
+
+  <!-- 核心演示路径 -->
+  <section id="path" class="scroll-mt-20">
+    <div class="flex items-end justify-between mb-5">
+      <div><div class="text-xs font-semibold text-brand-500 tracking-widest">DEMO FLOW</div><h2 class="text-2xl font-bold mt-1">核心演示路径</h2></div>
+      <span class="text-xs text-ink-500"><i class="fa-regular fa-lightbulb mr-1"></i>建议汇报按此顺序点击</span>
+    </div>
+    <ol class="grid grid-cols-5 gap-4" id="steps"></ol>
+  </section>
+
+  <!-- 移动端 H5：暗色展示画布 -->
+  <section id="mobile" class="scroll-mt-20">
+    <div class="flex items-end justify-between mb-5">
+      <div><div class="text-xs font-semibold text-brand-500 tracking-widest">MOBILE · 390 × 844</div><h2 class="text-2xl font-bold mt-1">移动端 H5</h2></div>
+      <span class="text-xs text-ink-500"><i class="fa-regular fa-hand-pointer mr-1"></i>点击手机预览打开页面</span>
+    </div>
+    <div class="relative rounded-3xl bg-[#0B1424] glow overflow-hidden">
+      <div class="absolute inset-0 grid-bg"></div>
+      <div class="relative p-7" id="h5"></div>
+    </div>
+  </section>
+
+  <!-- 管理后台 -->
+  <section id="admin-sec" class="scroll-mt-20">
+    <div class="flex items-end justify-between mb-5">
+      <div><div class="text-xs font-semibold text-brand-500 tracking-widest">DESKTOP · 1440 × 900</div><h2 class="text-2xl font-bold mt-1">管理后台 PC</h2></div>
+      <span class="text-xs text-ink-500"><i class="fa-regular fa-hand-pointer mr-1"></i>点击缩略图打开页面</span>
+    </div>
+    <div class="grid grid-cols-2 gap-6" id="admin"></div>
+  </section>
+</main>
+
+<footer class="border-t border-ink-100 bg-white">
+  <div class="max-w-[1280px] mx-auto px-8 h-16 flex items-center justify-between text-xs text-ink-500">
+    <span>所有数据为演示用模拟数据；二维码为示意图，不可扫码。</span>
+    <span>HTML · Tailwind CSS · Font Awesome</span>
+  </div>
+</footer>
+
+<script src="assets/js/common.js"></script>
+<script>
+  /* ---------- 数据 ---------- */
+  const M = [
+    { key: 'driver', name: '消费者 H5', icon: 'fa-user', tone: 'brand', desc: '支持主动下单支付后出示动态核销码，也可出示会员码接受加气员代下单并确认支付',
+      pages: [['c-pay.html', '主动下单'], ['c-order.html', '订单 / 动态码'], ['c-mine.html', '会员码 / 我的']] },
+    { key: 'owner', name: '管理员 H5', icon: 'fa-chart-line', tone: 'money', desc: '维护采购商、登记采购和确认进气；按批次调整库存并查看进出气状态',
+      pages: [['m-stations.html', '库存'], ['m-buyers.html', '管理']] },
+    { key: 'staff', name: '加气员 H5', icon: 'fa-gas-pump', tone: 'cng', desc: '当班后处理订单：扫动态核销码确认加气，或扫会员码代下单',
+      pages: [['s-workbench.html', '当班 / 待办'], ['s-scan.html', '扫码核销 / 代下单'], ['s-reconcile.html', '班次记录']] }
+  ];
+  const A = [['a-dashboard.html', '采购方工作台', 'fa-gauge-high'], ['a-stations.html', '站点与枪号', 'fa-location-dot'], ['a-prepay.html', '采购与库存', 'fa-boxes-stacked'], ['a-price.html', '销售价格', 'fa-tags'], ['a-orders.html', '销售订单', 'fa-receipt'], ['a-marketing.html', '优惠券', 'fa-ticket'], ['a-finance.html', '采购付款 / 收款', 'fa-scale-balanced']];
+  const TONE = { brand: ['bg-brand-50', 'text-brand-500'], money: ['bg-orange-50', 'text-money'], cng: ['bg-gas-cngbg', 'text-gas-cng'], lng: ['bg-gas-lngbg', 'text-gas-lng'] };
+  $('#statPages').firstChild.nodeValue = M.reduce((s, m) => s + m.pages.length, 0) + A.length;
+
+  /* ---------- 角色卡片 ---------- */
+  const roles = [...M.map(m => ({ ...m, href: '#' + m.key, count: m.pages.length })),
+    { key: 'admin', name: '采购方管理后台', icon: 'fa-desktop', tone: 'lng', href: '#admin-sec', count: A.length, desc: '采购批次、库存预警、销售订单、优惠券和采购付款/收款记录' }];
+  $('#roles').innerHTML = roles.map(r => `<a href="${r.href}" data-go="${r.key}" class="card p-5 group block ring-1 ring-ink-100 hover:-translate-y-1 hover:shadow-pop transition">
+      <div class="flex items-center justify-between"><span class="w-11 h-11 rounded-xl grid place-items-center ${TONE[r.tone].join(' ')}"><i class="fa-solid ${r.icon} text-lg"></i></span>
+        <span class="tag-mute">${r.count} 页</span></div>
+      <b class="block mt-4 text-[15px]">${r.name}</b>
+      <p class="text-xs text-ink-500 mt-1.5 leading-5 min-h-[40px]">${r.desc}</p>
+      <span class="mt-3 inline-flex items-center gap-1 text-xs font-semibold ${TONE[r.tone][1]}">查看页面<i class="fa-solid fa-arrow-right text-[10px] group-hover:translate-x-1 transition"></i></span></a>`).join('');
+
+  /* ---------- 演示路径 ---------- */
+  const S = [
+    ['消费者下单并出示动态码', '消费者', 'brand', [['c-pay.html', '主动下单'], ['c-order.html', '动态核销码']]],
+    ['加气员扫码核销 / 代下单', '加气员', 'cng', [['s-scan.html', '扫码操作'], ['s-workbench.html', '当班待办']]],
+    ['采购方登记批次并看库存', '采购方后台', 'lng', [['a-prepay.html', '采购与库存'], ['a-dashboard.html', '工作台']]],
+    ['采购方跟进付款、收款和票据', '采购方后台', 'money', [['a-finance.html', '往来记录'], ['a-orders.html', '销售订单']]],
+    ['管理员维护采购商并管理库存', '管理员', 'lng', [['m-buyers.html', '管理'], ['m-stations.html', '库存']]]
+  ];
+  $('#steps').innerHTML = S.map(([t, who, tone, links], i) => `<li class="relative">
+      ${i < S.length - 1 ? '<span class="absolute top-[22px] left-[52px] right-[-12px] h-0.5 bg-gradient-to-r from-brand-300 to-brand-100" aria-hidden="true"></span>' : ''}
+      <span class="relative z-10 w-11 h-11 rounded-full bg-brand-500 text-white font-bold grid place-items-center ring-4 ring-page shadow-card">${i + 1}</span>
+      <div class="card p-4 mt-3 ring-1 ring-ink-100 h-[calc(100%-56px)]">
+        <span class="tag ${TONE[tone].join(' ')}">${who}</span>
+        <b class="block mt-2 text-sm">${t}</b>
+        <div class="flex flex-wrap gap-1.5 mt-3">${links.map(([h, n]) => `<a href="${h}" class="inline-flex items-center gap-1 h-6 px-2 rounded-md bg-ink-100 text-[11px] text-ink-700 hover:bg-brand-50 hover:text-brand-600 transition">${n}<i class="fa-solid fa-arrow-up-right-from-square text-[9px] opacity-60"></i></a>`).join('')}</div>
+      </div></li>`).join('');
+
+  /* ---------- 移动端 H5（Tab） ---------- */
+  $('#h5').innerHTML = `<div class="flex items-center justify-between gap-4 mb-8">
+      <div class="flex items-center gap-1 p-1 rounded-xl bg-white/5 ring-1 ring-white/10" role="tablist" aria-label="H5 端切换">${M.map((m, n) => `<button role="tab" id="tab-${m.key}" aria-controls="pane-${m.key}" aria-selected="${n === 0}" data-h5="${m.key}"
+        class="h-10 px-5 rounded-lg text-sm font-semibold flex items-center gap-2 text-white/60 hover:text-white aria-selected:bg-white aria-selected:text-ink-900 aria-selected:shadow-card transition"><i class="fa-solid ${m.icon}"></i>${m.name}<span class="text-[11px] font-medium opacity-60">${m.pages.length}</span></button>`).join('')}</div></div>
+    ${M.map((m, n) => `<div role="tabpanel" id="pane-${m.key}" aria-labelledby="tab-${m.key}" ${n ? 'hidden' : ''}>
+      <p class="text-sm text-white/70 mb-8 flex items-center gap-2"><span class="w-7 h-7 rounded-lg grid place-items-center ${TONE[m.tone].join(' ')}"><i class="fa-solid ${m.icon} text-xs"></i></span>${m.desc}</p>
+      <div class="flex flex-wrap justify-center gap-6">${m.pages.map(([h, nm]) => `<a href="${h}" class="group block">
+        <div class="bezel p-2 rounded-[42px] shadow-[0_30px_60px_-20px_rgba(0,0,0,.7)] ring-1 ring-white/10 group-hover:-translate-y-2 group-hover:ring-brand-400/60 transition duration-300">
+          <div class="phone-screen relative rounded-[34px] overflow-hidden bg-white">
+            <iframe class="phone pointer-events-none" src="${h}" loading="lazy" title="${nm}" tabindex="-1" scrolling="no"></iframe>
+            <span class="absolute top-[7px] left-1/2 -translate-x-1/2 w-[76px] h-[22px] rounded-full bg-black" aria-hidden="true"></span>
+          </div></div>
+        <div class="mt-4 text-center"><div class="text-sm font-semibold text-white group-hover:text-brand-300 transition">${nm}</div><div class="text-[11px] text-white/40 font-mono mt-0.5">${h}</div></div></a>`).join('')}</div></div>`).join('')}`;
+  const showH5 = k => {
+    if (!M.some(m => m.key === k)) return false;
+    $$('[data-h5]').forEach(b => b.setAttribute('aria-selected', b.dataset.h5 === k));
+    $$('#h5 [role=tabpanel]').forEach(p => p.hidden = p.id !== 'pane-' + k);
+    return true;
+  };
+  $('#h5').addEventListener('click', e => { const b = e.target.closest('[data-h5]'); if (b) { showH5(b.dataset.h5); history.replaceState(null, '', '#' + b.dataset.h5); } });
+  // 角色卡片 / 地址栏 #driver #owner #staff：切换 Tab 并滚动到 H5 区
+  const route = () => { if (showH5(location.hash.slice(1))) $('#mobile').scrollIntoView(); };
+  window.addEventListener('hashchange', route);
+  if (!showH5(location.hash.slice(1))) showH5(M[0].key); else requestAnimationFrame(route);
+
+  /* ---------- 管理后台（浏览器窗口外壳） ---------- */
+  $('#admin').innerHTML = A.map(([h, n, ic]) => `<a href="${h}" class="group block rounded-xl2 bg-white ring-1 ring-ink-100 shadow-card overflow-hidden hover:shadow-pop hover:-translate-y-1 transition duration-300">
+    <div class="h-9 px-3 flex items-center gap-3 bg-[#EEF1F5] border-b border-ink-100">
+      <span class="flex gap-1.5" aria-hidden="true"><i class="w-2.5 h-2.5 rounded-full bg-[#FF5F57]"></i><i class="w-2.5 h-2.5 rounded-full bg-[#FEBC2E]"></i><i class="w-2.5 h-2.5 rounded-full bg-[#28C840]"></i></span>
+      <span class="flex-1 h-6 rounded-md bg-white text-[11px] text-ink-500 font-mono flex items-center gap-1.5 px-2.5 truncate"><i class="fa-solid fa-lock text-[9px] text-ok"></i>admin.gas-platform.cn/${h.replace('.html', '')}</span>
+    </div>
+    <div class="desk-wrap bg-page"><iframe class="desk pointer-events-none" src="${h}" loading="lazy" title="${n}" tabindex="-1" scrolling="no"></iframe></div>
+    <div class="px-4 h-12 flex items-center gap-2.5 border-t border-ink-100">
+      <span class="w-7 h-7 rounded-lg bg-gas-lngbg text-gas-lng grid place-items-center"><i class="fa-solid ${ic} text-xs"></i></span>
+      <b class="text-sm">${n}</b><span class="ml-auto text-xs font-semibold text-brand-500 opacity-0 group-hover:opacity-100 transition">打开<i class="fa-solid fa-arrow-right text-[10px] ml-1"></i></span></div></a>`).join('');
+  const ro = new ResizeObserver(es => es.forEach(e => e.target.style.setProperty('--s', e.contentRect.width / 1440)));
+  $$('.desk-wrap').forEach(w => ro.observe(w));
+</script>
+</body>
+</html>

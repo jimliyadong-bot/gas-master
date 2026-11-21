@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.gas.mapper.GasConfigMapper">
+
+	<resultMap type="GasConfig" id="GasConfigResult">
+		<id     property="configKey"   column="config_key"   />
+		<result property="configValue" column="config_value" />
+		<result property="updateBy"    column="update_by"    />
+		<result property="updateTime"  column="update_time"  />
+		<result property="remark"      column="remark"       />
+	</resultMap>
+
+	<sql id="selectConfigVo">
+        select config_key, config_value, update_by, update_time, remark
+        from gas_config
+    </sql>
+
+	<select id="selectConfigList" parameterType="GasConfig" resultMap="GasConfigResult">
+		<include refid="selectConfigVo"/>
+		<where>
+			<if test="configKey != null and configKey != ''">
+				AND config_key like concat('%', #{configKey}, '%')
+			</if>
+			<if test="configValue != null and configValue != ''">
+				AND config_value like concat('%', #{configValue}, '%')
+			</if>
+		</where>
+		order by config_key
+	</select>
+
+	<select id="selectConfigByKey" parameterType="String" resultMap="GasConfigResult">
+		<include refid="selectConfigVo"/>
+		where config_key = #{configKey}
+	</select>
+
+	<insert id="insertConfig" parameterType="GasConfig">
+		insert into gas_config(
+			config_key,
+			<if test="configValue != null and configValue != ''">config_value,</if>
+			<if test="remark != null and remark != ''">remark,</if>
+			<if test="updateBy != null and updateBy != ''">update_by,</if>
+			update_time
+		)values(
+			#{configKey},
+			<if test="configValue != null and configValue != ''">#{configValue},</if>
+			<if test="remark != null and remark != ''">#{remark},</if>
+			<if test="updateBy != null and updateBy != ''">#{updateBy},</if>
+			sysdate()
+		)
+	</insert>
+
+	<update id="updateConfig" parameterType="GasConfig">
+		update gas_config
+		<set>
+			<if test="configValue != null and configValue != ''">config_value = #{configValue},</if>
+			<if test="remark != null">remark = #{remark},</if>
+			<if test="updateBy != null and updateBy != ''">update_by = #{updateBy},</if>
+			update_time = sysdate()
+		</set>
+		where config_key = #{configKey}
+	</update>
+
+	<delete id="deleteConfigByIds" parameterType="String">
+		delete from gas_config where config_key in
+		<foreach collection="array" item="configKey" open="(" separator="," close=")">
+			#{configKey}
+		</foreach>
+	</delete>
+
+</mapper>

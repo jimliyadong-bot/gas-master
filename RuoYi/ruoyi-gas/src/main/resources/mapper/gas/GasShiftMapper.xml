@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.gas.mapper.GasShiftMapper">
+    <resultMap type="GasShift" id="GasShiftResult">
+        <id property="shiftId" column="shift_id"/>
+        <result property="stationId" column="station_id"/>
+        <result property="userId" column="user_id"/>
+        <result property="staffName" column="staff_name"/>
+        <result property="startedAt" column="started_at"/>
+        <result property="endedAt" column="ended_at"/>
+        <result property="activeFlag" column="active_flag"/>
+        <result property="endedBy" column="ended_by"/>
+        <result property="endReason" column="end_reason"/>
+        <result property="proxyCount" column="proxy_count"/>
+        <result property="redeemCount" column="redeem_count"/>
+        <result property="cngVolume" column="cng_volume"/>
+        <result property="lngVolume" column="lng_volume"/>
+        <result property="payAmount" column="pay_amount"/>
+        <result property="stationName" column="station_name"/>
+    </resultMap>
+
+    <sql id="columns">
+        s.shift_id, s.station_id, s.user_id, s.staff_name, s.started_at, s.ended_at,
+        s.active_flag, s.ended_by, s.end_reason, s.proxy_count, s.redeem_count,
+        s.cng_volume, s.lng_volume, s.pay_amount, st.station_name
+    </sql>
+
+    <select id="selectShiftById" resultMap="GasShiftResult">
+        select <include refid="columns"/> from gas_shift s
+        left join gas_station st on s.station_id = st.station_id
+        where s.shift_id = #{shiftId}
+    </select>
+
+    <select id="selectShiftByIdForUpdate" resultMap="GasShiftResult">
+        select shift_id, station_id, user_id, staff_name, started_at, ended_at, active_flag,
+               ended_by, end_reason, proxy_count, redeem_count, cng_volume, lng_volume, pay_amount
+        from gas_shift where shift_id = #{shiftId} for update
+    </select>
+
+    <select id="selectActiveByStation" resultMap="GasShiftResult">
+        select <include refid="columns"/> from gas_shift s
+        left join gas_station st on s.station_id = st.station_id
+        where s.station_id = #{stationId} and s.active_flag = 1 limit 1
+    </select>
+
+    <select id="selectActiveByStationForUpdate" resultMap="GasShiftResult">
+        select shift_id, station_id, user_id, staff_name, started_at, ended_at, active_flag,
+               ended_by, end_reason, proxy_count, redeem_count, cng_volume, lng_volume, pay_amount
+        from gas_shift where station_id = #{stationId} and active_flag = 1 limit 1 for update
+    </select>
+
+    <select id="selectActiveByUser" resultMap="GasShiftResult">
+        select <include refid="columns"/> from gas_shift s
+        left join gas_station st on s.station_id = st.station_id
+        where s.user_id = #{userId} and s.active_flag = 1 limit 1
+    </select>
+
+    <select id="selectShiftList" resultMap="GasShiftResult">
+        select <include refid="columns"/> from gas_shift s
+        left join gas_station st on s.station_id = st.station_id
+        <where>
+            <if test="stationId != null and stationId != 0">and s.station_id = #{stationId}</if>
+            <if test="userId != null and userId != 0">and s.user_id = #{userId}</if>
+            <if test="shiftStatus == 'ACTIVE'">and s.active_flag = 1</if>
+            <if test="shiftStatus == 'ENDED'">and s.active_flag is null</if>
+            <if test="staffName != null and staffName != ''">and s.staff_name like concat('%', #{staffName}, '%')</if>
+        </where>
+        order by s.shift_id desc
+    </select>
+
+    <select id="selectShiftSummary" resultMap="GasShiftResult">
+        select proxy.proxy_count, done.redeem_count, done.cng_volume, done.lng_volume, done.pay_amount
+        from (select count(1) as proxy_count from gas_order where created_shift_id = #{shiftId}) proxy
+        join (
+            select count(1) as redeem_count,
+                   coalesce(sum(case when gas_type = 'CNG' then actual_volume else 0 end), 0) as cng_volume,
+                   coalesce(sum(case when gas_type = 'LNG' then actual_volume else 0 end), 0) as lng_volume,
+                   coalesce(sum(pay_amount), 0) as pay_amount
+            from gas_order where completed_shift_id = #{shiftId} and status = 'COMPLETED'
+        ) done on 1 = 1
+    </select>
+
+    <insert id="insertShift" useGeneratedKeys="true" keyProperty="shiftId">
+        insert into gas_shift (station_id, user_id, staff_name, started_at, active_flag)
+        values (#{stationId}, #{userId}, #{staffName}, sysdate(), 1)
+    </insert>
+
+    <update id="endShift">
+        update gas_shift
+        set ended_at = sysdate(), active_flag = null, ended_by = #{endedBy}, end_reason = #{endReason},
+            proxy_count = #{proxyCount}, redeem_count = #{redeemCount},
+            cng_volume = #{cngVolume}, lng_volume = #{lngVolume}, pay_amount = #{payAmount}
+        where shift_id = #{shiftId} and active_flag = 1
+    </update>
+</mapper>

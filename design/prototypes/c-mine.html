@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>我的订单与优惠券 · 消费者端</title>
+<link rel="stylesheet" href="assets/tailwind.css?v=h5-layout-2">
+<link rel="stylesheet" href="assets/vendor/fontawesome/css/all.min.css">
+</head>
+<body data-shell="mobile" data-title="我的" data-tabbar="c" class="m-page min-h-screen">
+
+<main class="space-y-3">
+  <section class="bg-white px-4 pt-4 pb-5">
+    <div class="flex items-center gap-3">
+      <span class="w-14 h-14 rounded-full bg-gradient-to-br from-brand-400 to-brand-700 text-white grid place-items-center text-xl"><i class="fa-solid fa-truck"></i></span>
+      <div class="flex-1">
+        <div class="text-lg font-bold">138****6621</div>
+        <div class="flex gap-1.5 mt-1"><span class="tag-info"><i class="fa-solid fa-car-side"></i>鲁A·D8E21</span><span class="tag-mute">已实名</span></div>
+      </div>
+      <button class="btn-ghost btn-sm" data-open="#memberSheet"><i class="fa-solid fa-qrcode mr-1"></i>会员码</button>
+    </div>
+    <div class="grid grid-cols-3 mt-4 text-center">
+      <button class="py-1" onclick="document.querySelector('[role=tab][data-pane=cp]').click()"><div class="text-lg font-bold">3</div><div class="text-[11px] text-ink-500">优惠券</div></button>
+      <div class="py-1"><div class="text-lg font-bold">462.3</div><div class="text-[11px] text-ink-500">本月加气量</div></div>
+      <div class="py-1"><div class="text-lg font-bold text-ok">¥86.7</div><div class="text-[11px] text-ink-500">累计节省</div></div>
+    </div>
+  </section>
+
+  <section class="card mx-4">
+    <div class="flex px-2 border-b border-ink-100" data-tabs role="tablist">
+      <button class="on px-3 h-11 text-sm font-semibold text-ink-500 border-b-2 border-transparent [&.on]:text-ink-900 [&.on]:border-brand-500" data-pane="od" role="tab">加气订单</button>
+      <button class="px-3 h-11 text-sm font-semibold text-ink-500 border-b-2 border-transparent [&.on]:text-ink-900 [&.on]:border-brand-500" data-pane="cp" role="tab">优惠券</button>
+    </div>
+
+    <ul data-pane-id="od" class="divide-y divide-ink-100">
+      <li>
+        <button type="button" class="flex w-full items-center gap-3 px-4 py-3 text-left transition hover:bg-page" data-order-id="GS2026111314328261" data-station="高新区油气合建站" data-status="待加气" data-status-key="pending" data-amount="190.00" data-gun="3 号枪" data-gas="CNG" data-volume="预计 51.28 m³" data-time="2026-11-13 14:32" data-payment="微信支付 · 拉卡拉" data-note="动态核销码已生成，请向加气员出示">
+          <span class="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-gas-cngbg text-gas-cng"><i class="fa-solid fa-gas-pump"></i></span>
+          <span class="min-w-0 flex-1">
+            <span class="block truncate text-sm font-semibold">高新区油气合建站</span>
+            <span class="mt-1 block truncate text-xs text-ink-500">3 号枪 · CNG · 预计 51.28 m³</span>
+          </span>
+          <span class="flex w-20 shrink-0 flex-col items-end gap-1">
+            <span class="tag-info">待加气</span>
+            <b class="text-sm text-ink-900">¥190.00</b>
+          </span>
+          <i class="fa-solid fa-chevron-right shrink-0 text-[10px] text-ink-300" aria-hidden="true"></i>
+        </button>
+      </li>
+      <li>
+        <button type="button" class="flex w-full items-center gap-3 px-4 py-3 text-left transition hover:bg-page" data-order-id="GS2026110621034792" data-station="港区 LNG 物流站" data-status="已完成" data-status-key="completed" data-amount="460.00" data-gun="6 号枪" data-gas="LNG" data-volume="96.39 kg" data-time="2026-11-06 21:03" data-payment="支付宝 · 拉卡拉" data-note="本次加气已完成">
+          <span class="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-gas-lngbg text-gas-lng"><i class="fa-solid fa-snowflake"></i></span>
+          <span class="min-w-0 flex-1">
+            <span class="block truncate text-sm font-semibold">港区 LNG 物流站</span>
+            <span class="mt-1 block truncate text-xs text-ink-500">6 号枪 · LNG · 96.39 kg</span>
+          </span>
+          <span class="flex w-20 shrink-0 flex-col items-end gap-1">
+            <span class="tag-ok">已完成</span>
+            <b class="text-sm text-ink-900">¥460.00</b>
+          </span>
+          <i class="fa-solid fa-chevron-right shrink-0 text-[10px] text-ink-300" aria-hidden="true"></i>
+        </button>
+      </li>
+      <li>
+        <button type="button" class="flex w-full items-center gap-3 px-4 py-3 text-left transition hover:bg-page" data-order-id="GS2026110307482156" data-station="城北 CNG 加气站" data-status="已完成" data-status-key="completed" data-amount="282.30" data-gun="2 号枪" data-gas="CNG" data-volume="76.92 m³" data-time="2026-11-03 07:48" data-payment="微信支付 · 拉卡拉" data-note="本次加气已完成">
+          <span class="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-gas-cngbg text-gas-cng"><i class="fa-solid fa-gas-pump"></i></span>
+          <span class="min-w-0 flex-1">
+            <span class="block truncate text-sm font-semibold">城北 CNG 加气站</span>
+            <span class="mt-1 block truncate text-xs text-ink-500">2 号枪 · CNG · 76.92 m³</span>
+          </span>
+          <span class="flex w-20 shrink-0 flex-col items-end gap-1">
+            <span class="tag-ok">已完成</span>
+            <b class="text-sm text-ink-900">¥282.30</b>
+          </span>
+          <i class="fa-solid fa-chevron-right shrink-0 text-[10px] text-ink-300" aria-hidden="true"></i>
+        </button>
+      </li>
+      <li>
+        <button type="button" class="flex w-full items-center gap-3 px-4 py-3 text-left transition hover:bg-page" data-order-id="GS2026102918200834" data-station="西郊 CNG 加气站" data-status="已退款" data-status-key="refunded" data-amount="100.00" data-gun="1 号枪" data-gas="CNG" data-volume="—" data-time="2026-10-29 18:20" data-payment="原支付渠道" data-note="退款原因：枪号选错">
+          <span class="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-gas-cngbg text-gas-cng"><i class="fa-solid fa-gas-pump"></i></span>
+          <span class="min-w-0 flex-1">
+            <span class="block truncate text-sm font-semibold">西郊 CNG 加气站</span>
+            <span class="mt-1 block truncate text-xs text-ink-500">1 号枪 · 枪号选错</span>
+          </span>
+          <span class="flex w-20 shrink-0 flex-col items-end gap-1">
+            <span class="tag-mute">已退款</span>
+            <b class="text-sm text-ink-500 line-through">¥100.00</b>
+          </span>
+          <i class="fa-solid fa-chevron-right shrink-0 text-[10px] text-ink-300" aria-hidden="true"></i>
+        </button>
+      </li>
+    </ul>
+
+    <div data-pane-id="cp" hidden class="p-3 space-y-2.5">
+      <div class="flex rounded-xl overflow-hidden ring-1 ring-ink-100"><span class="w-24 bg-gradient-to-br from-[#FF8A4C] to-money text-white flex flex-col items-center justify-center py-3"><b class="text-2xl">¥10</b><span class="text-[10px]">满 200 可用</span></span><span class="flex-1 px-3 py-2.5 bg-[#FFF8F4]"><b class="text-sm block">满 200 减 10 元</b><span class="text-[11px] text-ink-500 block mt-1">全部合作站 · 2026-11-30 到期</span><span class="tag-warn mt-1.5">3 天后到期</span></span></div>
+      <div class="flex rounded-xl overflow-hidden ring-1 ring-ink-100"><span class="w-24 bg-gradient-to-br from-[#FF8A4C] to-money text-white flex flex-col items-center justify-center py-3"><b class="text-2xl">¥18</b><span class="text-[10px]">满 300 可用</span></span><span class="flex-1 px-3 py-2.5 bg-[#FFF8F4]"><b class="text-sm block">满 300 减 18 元</b><span class="text-[11px] text-ink-500 block mt-1">高新区油气合建站 · 2026-12-15 到期</span></span></div>
+      <div class="flex rounded-xl overflow-hidden ring-1 ring-ink-100"><span class="w-24 bg-gradient-to-br from-[#8A7CF0] to-gas-lng text-white flex flex-col items-center justify-center py-3"><b class="text-2xl">¥30</b><span class="text-[10px]">满 500 可用</span></span><span class="flex-1 px-3 py-2.5 bg-[#F6F5FF]"><b class="text-sm block">LNG 专享券</b><span class="text-[11px] text-ink-500 block mt-1">仅 LNG · 2026-12-31 到期</span></span></div>
+    </div>
+
+  </section>
+
+  <section class="card mx-4 divide-y divide-ink-100 text-sm">
+    <a class="flex items-center gap-3 px-4 h-12" href="#" data-toast="原型：合作站点列表与导航"><i class="fa-solid fa-map-location-dot w-5 text-ink-500"></i><span class="flex-1">合作站点</span><span class="text-xs text-ink-500">6 个</span><i class="fa-solid fa-chevron-right text-[10px] text-ink-300"></i></a>
+    <a class="flex items-center gap-3 px-4 h-12" href="#" data-toast="正在接入在线客服…"><i class="fa-solid fa-headset w-5 text-ink-500"></i><span class="flex-1">在线客服</span><i class="fa-solid fa-chevron-right text-[10px] text-ink-300"></i></a>
+  </section>
+</main>
+<div class="sheet" id="orderDetailSheet" role="dialog" aria-modal="true" aria-labelledby="orderDetailTitle">
+  <div class="flex h-12 items-center justify-between border-b border-ink-100 px-4">
+    <b id="orderDetailTitle">订单详情</b>
+    <button data-close aria-label="关闭"><i class="fa-solid fa-xmark text-ink-500"></i></button>
+  </div>
+  <div class="space-y-4 p-4 pb-8">
+    <div class="flex items-start justify-between gap-3 rounded-xl bg-page p-4">
+      <div class="min-w-0">
+        <span id="detailStatus" class="tag-info">待加气</span>
+        <b id="detailStation" class="mt-2 block truncate text-base">高新区油气合建站</b>
+      </div>
+      <div class="shrink-0 text-right">
+        <span class="text-xs text-ink-500">订单金额</span>
+        <b id="detailOrderAmount" class="mt-1 block text-xl">¥190.00</b>
+      </div>
+    </div>
+    <div class="rounded-xl border border-ink-100 px-4 text-sm">
+      <div class="flex justify-between gap-3 border-b border-ink-100 py-3"><span class="text-ink-500">订单编号</span><span id="detailOrderId" class="text-right font-medium">—</span></div>
+      <div class="flex justify-between gap-3 border-b border-ink-100 py-3"><span class="text-ink-500">枪号 / 气种</span><span id="detailGunGas" class="text-right font-medium">—</span></div>
+      <div class="flex justify-between gap-3 border-b border-ink-100 py-3"><span id="detailVolumeLabel" class="text-ink-500">预计气量</span><span id="detailOrderVolume" class="text-right font-medium">—</span></div>
+      <div class="flex justify-between gap-3 border-b border-ink-100 py-3"><span class="text-ink-500">下单时间</span><span id="detailOrderTime" class="text-right font-medium">—</span></div>
+      <div class="flex justify-between gap-3 py-3"><span class="text-ink-500">支付方式</span><span id="detailPayment" class="text-right font-medium">—</span></div>
+    </div>
+    <p id="detailOrderNote" class="rounded-lg bg-brand-50 px-3 py-2.5 text-xs leading-5 text-brand-700"></p>
+    <button class="btn-primary btn-lg w-full hidden" id="orderProgressButton">查看订单进度</button>
+  </div>
+</div>
+<div class="sheet" id="memberSheet" role="dialog" aria-label="个人会员码">
+  <div class="flex items-center justify-between px-4 h-12 border-b border-ink-100"><b>个人会员码</b><button data-close aria-label="关闭"><i class="fa-solid fa-xmark text-ink-500"></i></button></div>
+  <div class="p-5 pb-8 text-center">
+    <div class="w-52 h-52 mx-auto p-3 rounded-xl bg-white ring-1 ring-ink-100" data-qr="1386621"></div>
+    <b class="block mt-3">会员 138****6621</b>
+    <p class="text-xs text-ink-500 mt-1">让加气员扫码识别会员后代为录入枪号和金额；下单后请核对并确认支付</p>
+  </div>
+</div>
+<script src="assets/js/common.js?v=h5-layout-2"></script>
+<script>
+  const orderList = document.querySelector('[data-pane-id="od"]');
+  const orderProgressButton = document.getElementById('orderProgressButton');
+  orderList.addEventListener('click', event => {
+    const item = event.target.closest('button[data-order-id]');
+    if (!item) return;
+    const get = key => item.dataset[key] || '—';
+    const statusClasses = { pending: 'tag-info', completed: 'tag-ok', refunded: 'tag-mute' };
+    const status = document.getElementById('detailStatus');
+    status.className = statusClasses[get('statusKey')] || 'tag-mute';
+    status.textContent = get('status');
+    document.getElementById('detailStation').textContent = get('station');
+    document.getElementById('detailOrderAmount').textContent = `¥${get('amount')}`;
+    document.getElementById('detailOrderId').textContent = get('orderId');
+    document.getElementById('detailGunGas').textContent = `${get('gun')} · ${get('gas')}`;
+    document.getElementById('detailVolumeLabel').textContent = get('statusKey') === 'pending' ? '预计气量' : '加气量';
+    document.getElementById('detailOrderVolume').textContent = get('volume');
+    document.getElementById('detailOrderTime').textContent = get('time');
+    document.getElementById('detailPayment').textContent = get('payment');
+    document.getElementById('detailOrderNote').textContent = get('note');
+    const canTrack = get('statusKey') === 'pending';
+    orderProgressButton.classList.toggle('hidden', !canTrack);
+    orderProgressButton.hidden = !canTrack;
+    orderProgressButton.dataset.orderId = get('orderId');
+    openLayer('#orderDetailSheet');
+  });
+  orderProgressButton.addEventListener('click', () => { window.location.href = 'c-order.html'; });
+</script>
+</body>
+</html>

@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org">
+<head>
+	<th:block th:include="include :: header('新增业务参数')" />
+</head>
+<body class="white-bg">
+	<div class="wrapper wrapper-content animated fadeInRight ibox-content">
+		<form class="form-horizontal m" id="form-config-add">
+			<div class="form-group">
+				<label class="col-sm-3 control-label is-required">参数键：</label>
+				<div class="col-sm-8">
+					<input class="form-control" type="text" name="configKey" id="configKey" placeholder="如 order.waitPay.minutes" required>
+				</div>
+			</div>
+			<div class="form-group">
+				<label class="col-sm-3 control-label is-required">参数值：</label>
+				<div class="col-sm-8">
+					<input class="form-control" type="text" name="configValue" id="configValue" required>
+				</div>
+			</div>
+			<div class="form-group">
+				<label class="col-sm-3 control-label">说明：</label>
+				<div class="col-sm-8">
+					<textarea id="remark" name="remark" class="form-control"></textarea>
+				</div>
+			</div>
+		</form>
+	</div>
+	<th:block th:include="include :: footer" />
+	<script type="text/javascript">
+		var prefix = ctx + "gas/config";
+
+		$("#form-config-add").validate({
+			onkeyup: false,
+			rules: {
+				configKey: {
+					remote: {
+						url: prefix + "/checkConfigKeyUnique",
+						type: "post",
+						dataType: "json",
+						data: {
+							"configKey": function() {
+								return $.common.trim($("#configKey").val());
+							}
+						}
+					}
+				}
+			},
+			messages: {
+				"configKey": { remote: "参数键已经存在" }
+			},
+			focusCleanup: true
+		});
+
+		function submitHandler() {
+			if ($.validate.form()) {
+				$.operate.save(prefix + "/add", $('#form-config-add').serialize());
+			}
+		}
+	</script>
+</body>
+</html>

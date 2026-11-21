@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.gas.mapper.GasPurchaseReceiptMapper">
+
+	<resultMap type="GasPurchaseReceipt" id="GasPurchaseReceiptResult">
+		<id     property="receiptId"   column="receipt_id"   />
+		<result property="batchId"     column="batch_id"     />
+		<result property="buyerId"     column="buyer_id"     />
+		<result property="stationId"   column="station_id"   />
+		<result property="gasType"     column="gas_type"     />
+		<result property="qty"         column="qty"          />
+		<result property="consumed"    column="consumed"     />
+		<result property="adjusted"    column="adjusted"     />
+		<result property="receivedAt"  column="received_at"  />
+		<result property="version"     column="version"      />
+		<result property="createBy"    column="create_by"    />
+		<result property="createTime"  column="create_time"  />
+		<result property="updateBy"    column="update_by"    />
+		<result property="updateTime"  column="update_time"  />
+		<result property="remark"      column="remark"       />
+		<result property="batchNo"     column="batch_no"     />
+		<result property="stationName" column="station_name" />
+		<result property="buyerName"   column="buyer_name"   />
+		<result property="remain"      column="remain"       />
+	</resultMap>
+
+	<sql id="selectReceiptVo">
+        select r.receipt_id, r.batch_id, r.buyer_id, r.station_id, r.gas_type, r.qty, r.consumed, r.adjusted,
+               r.received_at, r.version, r.create_by, r.create_time, r.update_by, r.update_time, r.remark,
+               b.batch_no, s.station_name, bu.buyer_name,
+               (r.qty + r.adjusted - r.consumed) as remain
+        from gas_purchase_receipt r
+        left join gas_purchase_batch b on r.batch_id = b.batch_id
+        left join gas_station s on r.station_id = s.station_id
+        left join gas_buyer bu on r.buyer_id = bu.buyer_id
+    </sql>
+
+	<select id="selectReceiptList" parameterType="GasPurchaseReceipt" resultMap="GasPurchaseReceiptResult">
+		<include refid="selectReceiptVo"/>
+		<where>
+			<if test="batchId != null and batchId != 0">
+				AND r.batch_id = #{batchId}
+			</if>
+			<if test="batchNo != null and batchNo != ''">
+				AND b.batch_no like concat('%', #{batchNo}, '%')
+			</if>
+			<if test="buyerId != null and buyerId != 0">
+				AND r.buyer_id = #{buyerId}
+			</if>
+			<if test="stationId != null and stationId != 0">
+				AND r.station_id = #{stationId}
+			</if>
+			<if test="gasType != null and gasType != ''">
+				AND r.gas_type = #{gasType}
+			</if>
+		</where>
+		order by r.received_at desc, r.receipt_id desc
+	</select>
+
+	<select id="selectReceiptById" parameterType="Long" resultMap="GasPurchaseReceiptResult">
+		<include refid="selectReceiptVo"/>
+		where r.receipt_id = #{receiptId}
+	</select>
+
+	<select id="selectReceiptByIdForUpdate" parameterType="Long" resultMap="GasPurchaseReceiptResult">
+		select r.receipt_id, r.batch_id, r.buyer_id, r.station_id, r.gas_type, r.qty, r.consumed, r.adjusted,
+		       r.received_at, r.version, (r.qty + r.adjusted - r.consumed) as remain
+		from gas_purchase_receipt r
+		where r.receipt_id = #{receiptId} for update
+	</select>
+
+	<!-- 先进先出：锁定该站该气种有余量的到货批次（同池操作串行化后再按序锁定批次） -->
+	<select id="selectFifoForUpdate" resultMap="GasPurchaseReceiptResult">
+		select r.receipt_id, r.batch_id, r.buyer_id, r.station_id, r.gas_type, r.qty, r.consumed, r.adjusted,
+		       r.received_at, r.version, (r.qty + r.adjusted - r.consumed) as remain
+		from gas_purchase_receipt r
+		where r.station_id = #{stationId} and r.gas_type = #{gasType}
+		  and (r.qty + r.adjusted - r.consumed) &gt; 0
+		order by r.received_at, r.receipt_id
+		for update
+	</select>
+
+	<insert id="insertReceipt" parameterType="GasPurchaseReceipt" useGeneratedKeys="true" keyProperty="receiptId">
+		insert into gas_purchase_receipt(
+			batch_id, buyer_id, station_id, gas_type, qty, received_at,
+			<if test="remark != null">remark,</if>
+			<if test="createBy != null and createBy != ''">create_by,</if>
+			create_time
+		)values(
+			#{batchId}, #{buyerId}, #{stationId}, #{gasType}, #{qty}, #{receivedAt},
+			<if test="remark != null">#{remark},</if>
+			<if test="createBy != null and createBy != ''">#{createBy},</if>
+			sysdate()
+		)
+	</insert>
+
+	<update id="addConsumed">
+		update gas_purchase_receipt
+		set consumed = consumed + #{qty}, version = version + 1, update_time = sysdate()
+		where receipt_id = #{receiptId}
+	</update>
+
+	<update id="addAdjusted">
+		update gas_purchase_receipt
+		set adjusted = adjusted + #{qty}, version = version + 1, update_time = sysdate()
+		where receipt_id = #{receiptId}
+	</update>
+
+	<select id="sumBatchRemain" parameterType="Long" resultType="java.math.BigDecimal">
+		select ifnull(sum(qty + adjusted - consumed), 0) from gas_purchase_receipt where batch_id = #{batchId}
+	</select>
+
+	<select id="sumReceivedQty" parameterType="Long" resultType="java.math.BigDecimal">
+		select ifnull(sum(qty), 0) from gas_purchase_receipt where batch_id = #{batchId}
+	</select>
+
+	<select id="sumReceivedQtyForUpdate" parameterType="Long" resultType="java.math.BigDecimal">
+		select ifnull(sum(qty), 0) from gas_purchase_receipt where batch_id = #{batchId} for update
+	</select>
+
+	<select id="countByBatchIds" parameterType="Long" resultType="int">
+		select count(1) from gas_purchase_receipt where batch_id in
+		<foreach collection="array" item="batchId" open="(" separator="," close=")">
+			#{batchId}
+		</foreach>
+	</select>
+
+</mapper>

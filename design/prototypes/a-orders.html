@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>销售订单 · 采购方后台</title>
+<link rel="stylesheet" href="assets/tailwind.css">
+<link rel="stylesheet" href="assets/vendor/fontawesome/css/all.min.css">
+</head>
+<body data-shell="admin" data-crumb="销售/销售订单">
+<main id="main" class="p-6 space-y-4">
+  <div class="flex items-center justify-between">
+    <div><h1 class="text-xl font-bold">销售订单</h1><p class="text-sm text-ink-500 mt-0.5">扫码订单统一记录支付、优惠、预计气量、加气员确认量与库存变动</p></div>
+    <button class="btn-ghost"><i class="fa-solid fa-download"></i>导出订单</button>
+  </div>
+  <section class="grid grid-cols-4 gap-4">
+    <div class="card p-4"><div class="kpi-label">今日订单</div><div class="kpi-value mt-1">248</div></div>
+    <div class="card p-4"><div class="kpi-label">拉卡拉支付成功</div><div class="kpi-value mt-1">¥36,420</div></div>
+    <div class="card p-4"><div class="kpi-label">待加气</div><div class="kpi-value mt-1 text-brand-600">26 单</div></div>
+    <div class="card p-4"><div class="kpi-label">已完成核销</div><div class="kpi-value mt-1">216 单</div></div>
+  </section>
+  <section class="card p-4 flex flex-wrap items-end gap-3">
+    <div><label class="label">订单号 / 手机号</label><input class="field w-56" placeholder="支持模糊查询"></div>
+    <div><label class="label">站点</label><select class="field w-44"><option>全部站点</option><option>高新区油气合建站</option><option>城北 CNG 加气站</option></select></div>
+    <div><label class="label">订单状态</label><select class="field w-36"><option>全部状态</option><option>待支付</option><option>待加气</option><option>已完成</option><option>退款</option></select></div>
+    <div><label class="label">下单时间</label><input class="field w-52" value="2026-11-13 ~ 2026-11-13"></div>
+    <button class="btn-primary"><i class="fa-solid fa-magnifying-glass"></i>查询</button>
+  </section>
+  <section class="card">
+    <div class="px-5 pt-3 border-b border-ink-100 flex gap-6 text-sm" data-tabs>
+      <button class="on h-10 border-b-2 border-transparent text-ink-500 [&.on]:text-ink-900 [&.on]:border-brand-500 font-semibold">全部</button>
+      <button class="h-10 border-b-2 border-transparent text-ink-500 [&.on]:text-ink-900 [&.on]:border-brand-500 font-semibold">待加气 <span class="tag-info">26</span></button>
+      <button class="h-10 border-b-2 border-transparent text-ink-500 [&.on]:text-ink-900 [&.on]:border-brand-500 font-semibold">已完成</button>
+      <button class="h-10 border-b-2 border-transparent text-ink-500 [&.on]:text-ink-900 [&.on]:border-brand-500 font-semibold">退款 / 关闭</button>
+    </div>
+    <table class="tbl">
+      <thead><tr><th>订单号 / 时间</th><th>站点 / 枪号</th><th>用户</th><th class="num">下单金额</th><th class="num">优惠</th><th class="num">实付</th><th>预计气量</th><th>实际确认量</th><th>支付渠道</th><th>状态</th><th>操作</th></tr></thead>
+      <tbody>
+        <tr><td class="font-mono text-xs">GS2026111314328261<br><span class="text-ink-500">14:32</span></td><td>高新区油气合建站 · 3 号</td><td>138****6621</td><td class="num">¥200.00</td><td class="num text-money">-¥10.00</td><td class="num font-semibold">¥190.00</td><td>51.28 m³</td><td>—</td><td>微信 · 拉卡拉</td><td><span class="tag-info">待加气</span></td><td class="text-brand-500"><button data-open="#detail">详情</button></td></tr>
+        <tr><td class="font-mono text-xs">GS2026111314200172<br><span class="text-ink-500">14:20</span></td><td>城北 CNG 加气站 · 1 号</td><td>186****4410</td><td class="num">¥300.00</td><td class="num text-money">-¥18.00</td><td class="num font-semibold">¥282.00</td><td>77.32 m³</td><td>74.80 m³</td><td>支付宝 · 拉卡拉</td><td><span class="tag-ok">已完成</span></td><td class="text-brand-500"><button data-open="#detail">详情</button></td></tr>
+        <tr><td class="font-mono text-xs">GS2026111313580035<br><span class="text-ink-500">13:58</span></td><td>港区 LNG 物流站 · 2 号</td><td>139****0281</td><td class="num">¥500.00</td><td class="num">—</td><td class="num font-semibold">¥500.00</td><td>100.40 kg</td><td>—</td><td>云闪付 · 拉卡拉</td><td><span class="tag-warn">退款处理中</span></td><td class="text-brand-500"><button data-open="#detail">详情</button></td></tr>
+      </tbody>
+    </table>
+    <div class="flex items-center justify-between px-4 h-12 text-xs text-ink-500"><span>共 248 条</span><div class="flex gap-1"><button class="btn-ghost btn-sm">上一页</button><button class="btn-primary btn-sm">1</button><button class="btn-ghost btn-sm">2</button><button class="btn-ghost btn-sm">下一页</button></div></div>
+  </section>
+</main>
+<aside class="drawer !w-[600px]" id="detail" role="dialog" aria-label="销售订单详情">
+  <div class="h-14 px-5 flex items-center justify-between border-b border-ink-100"><div><b>销售订单详情</b><span class="font-mono text-xs text-ink-500 ml-2">GS2026111314328261</span></div><button data-close aria-label="关闭"><i class="fa-solid fa-xmark text-ink-500"></i></button></div>
+  <div class="flex-1 overflow-y-auto p-5 space-y-5 text-sm">
+    <div class="flex items-center gap-2"><span class="tag-info">微信支付 · 拉卡拉</span><span class="tag-info">待加气</span></div>
+    <dl class="grid grid-cols-[110px_1fr] gap-y-2.5">
+      <dt class="text-ink-500">站点 / 枪号</dt><dd>高新区油气合建站 · 3 号枪 · CNG</dd>
+      <dt class="text-ink-500">用户</dt><dd>138****6621</dd>
+      <dt class="text-ink-500">单价</dt><dd>¥3.90/m³</dd>
+      <dt class="text-ink-500">订单金额 / 优惠</dt><dd>¥200.00 / -¥10.00</dd>
+      <dt class="text-ink-500">实付金额</dt><dd class="font-semibold">¥190.00</dd>
+      <dt class="text-ink-500">预计气量</dt><dd>51.28 m³（仅供参考）</dd>
+      <dt class="text-ink-500">实际加气量</dt><dd>待加气员确认</dd>
+      <dt class="text-ink-500">库存处理</dt><dd>支付后预占 51.28 m³，核销后按确认量实扣</dd>
+      <dt class="text-ink-500">订单时间</dt><dd>2026-11-13 14:32:05</dd>
+    </dl>
+    <div class="rounded-lg bg-page p-3 text-xs text-ink-700">支付成功后由拉卡拉回调确认。预计气量不作为实际计量数据；退款与实际量差额规则按采购方确认的业务规则处理。</div>
+  </div>
+  <div class="h-16 px-5 border-t border-ink-100 flex items-center justify-end gap-2"><button class="btn-ghost" data-close>关闭</button><button class="btn-danger" data-toast="退款规则待采购方配置">处理退款</button></div>
+</aside>
+<script src="assets/js/common.js"></script>
+</body>
+</html>

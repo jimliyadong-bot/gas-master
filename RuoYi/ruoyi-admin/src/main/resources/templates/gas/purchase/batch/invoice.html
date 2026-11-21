@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org">
+<head>
+	<th:block th:include="include :: header('维护票据状态')" />
+</head>
+<body class="white-bg">
+	<div class="wrapper wrapper-content animated fadeInRight ibox-content">
+		<form class="form-horizontal m" id="form-batch-invoice" th:object="${batch}">
+			<input type="hidden" name="batchId" th:field="*{batchId}">
+			<div class="form-group">
+				<label class="col-sm-3 control-label">批次号：</label>
+				<div class="col-sm-8">
+					<p class="form-control-static" th:text="*{batchNo}"></p>
+				</div>
+			</div>
+			<div class="form-group">
+				<label class="col-sm-3 control-label is-required">票据状态：</label>
+				<div class="col-sm-8">
+					<select class="form-control" name="invoiceStatus" id="invoiceStatus" required>
+						<option value="UNINVOICED" th:selected="*{invoiceStatus == 'UNINVOICED'}">未开票</option>
+						<option value="INVOICED" th:selected="*{invoiceStatus == 'INVOICED'}">已开票</option>
+					</select>
+				</div>
+			</div>
+			<div class="form-group">
+				<label class="col-sm-3 control-label">发票号：</label>
+				<div class="col-sm-8">
+					<input class="form-control" type="text" name="invoiceNo" id="invoiceNo" th:field="*{invoiceNo}" maxlength="64" placeholder="标记为已开票时必填">
+				</div>
+			</div>
+		</form>
+	</div>
+	<th:block th:include="include :: footer" />
+	<script type="text/javascript">
+		var prefix = ctx + "gas/purchase/batch";
+
+		function submitHandler() {
+			if ($.validate.form()) {
+				$.post(prefix + "/invoice", $("#form-batch-invoice").serialize(), function(result) {
+					if (result.code === 0) {
+						$.modal.msgSuccess("票据状态已更新");
+						$.modal.closeTab();
+						// 关闭弹窗并刷新父页面列表
+						parent.$.table.refresh();
+						var index = parent.layer.getFrameIndex(window.name);
+						parent.layer.close(index);
+					} else {
+						$.modal.alertError(result.msg);
+					}
+				});
+			}
+		}
+	</script>
+</body>
+</html>

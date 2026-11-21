@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>订单状态 · 消费者端</title>
+<link rel="stylesheet" href="assets/tailwind.css?v=h5-layout-2">
+<link rel="stylesheet" href="assets/vendor/fontawesome/css/all.min.css">
+<style>
+  #driverOrderPicker[hidden] { display: none !important; }
+  .order-state-tabs {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 4px;
+    width: 100%;
+    padding: 4px;
+    border: 1px solid #e4e8ee;
+    border-radius: 14px;
+    background: #eef1f5;
+  }
+  .order-state-tabs > button {
+    min-width: 0;
+    height: 40px;
+    padding: 0 4px;
+    border-radius: 10px;
+    color: #667085;
+    font-size: 13px;
+    font-weight: 600;
+    white-space: nowrap;
+    transition: background-color .15s ease, color .15s ease, box-shadow .15s ease;
+  }
+  .order-state-tabs > button.on {
+    background: #2a78d6;
+    color: #fff;
+    box-shadow: 0 2px 6px rgba(23, 32, 46, .16);
+  }
+</style>
+</head>
+<body data-shell="mobile" data-title="订单详情" data-tabbar="c" data-back="c-pay.html" class="m-page min-h-screen pb-10">
+<main class="px-4 pt-3 space-y-3">
+  <div class="px-1">
+    <div class="order-state-tabs" id="stateSeg" role="tablist" aria-label="订单状态">
+      <button class="on" data-s="all" role="tab" aria-selected="true">全部</button>
+      <button data-s="wait" role="tab" aria-selected="false">待核销</button>
+      <button data-s="confirm" role="tab" aria-selected="false">待确认</button>
+      <button data-s="done" role="tab" aria-selected="false">已完成</button>
+      <button data-s="closed" role="tab" aria-selected="false">已关闭</button>
+    </div>
+  </div>
+
+  <label id="driverOrderPicker" class="block text-xs text-ink-500">当前订单
+    <select id="driverOrderSelect" class="field mt-1" aria-label="选择查看或确认的订单"></select>
+  </label>
+  <section class="card overflow-hidden" data-state="all">
+    <div class="px-4 pt-4 pb-3"><h2 class="font-semibold">全部订单</h2></div>
+    <ul class="divide-y divide-ink-100 text-sm" id="allList"></ul>
+  </section>
+  <p id="orderEmpty" class="card p-5 text-center text-sm text-ink-500" data-state="empty" hidden>暂无订单</p>
+  <section class="card overflow-hidden" data-state="confirm" hidden>
+    <div class="bg-amber-50 px-4 py-2.5">
+      <div class="flex items-center gap-3">
+        <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white text-amber-700"><i class="fa-solid fa-clipboard-check"></i></span>
+        <div class="min-w-0 flex-1">
+          <div class="flex items-center gap-2">
+            <h2 class="font-semibold text-amber-900">加气员为你创建了订单</h2>
+            <span class="tag-warn">待确认</span>
+          </div>
+          <p class="mt-1 text-xs text-ink-500">核对订单信息后，再确认支付</p>
+        </div>
+      </div>
+    </div>
+    <div class="space-y-3 p-4">
+      <div class="flex items-center justify-between gap-3">
+        <div class="flex min-w-0 items-center gap-2">
+          <i class="fa-solid fa-location-dot shrink-0 text-sm text-ink-500"></i>
+          <p id="pendingStation" class="truncate font-semibold">高新区油气合建站</p>
+        </div>
+        <div class="shrink-0 text-right">
+          <p class="text-xs text-ink-500">待支付</p>
+          <b id="pendingAmount" class="mt-0.5 block text-xl tracking-tight text-money">¥200.00</b>
+        </div>
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div class="rounded-xl border border-ink-100 bg-page p-3">
+          <span class="flex items-center gap-1.5 text-xs text-ink-500"><i class="fa-solid fa-gas-pump"></i>枪号 / 气种</span>
+          <b id="pendingGun" class="mt-1 block text-sm">3 号枪 · CNG</b>
+        </div>
+        <div class="rounded-xl border border-ink-100 bg-page p-3">
+          <span class="flex items-center gap-1.5 text-xs text-ink-500"><i class="fa-solid fa-chart-column"></i>预计气量</span>
+          <b id="pendingVolume" class="mt-1 block text-sm">51.28 m³</b>
+        </div>
+      </div>
+      <div class="flex items-center justify-between rounded-xl bg-page px-3 py-2 text-sm">
+        <span class="flex items-center gap-2 text-ink-500"><i class="fa-solid fa-user-pen"></i>加气员</span>
+        <span id="pendingStaff" class="font-medium text-ink-700">李师傅 · 14:32</span>
+      </div>
+      <div class="flex items-center gap-2 rounded-lg bg-brand-50 px-3 py-2 text-xs text-brand-700">
+        <i class="fa-solid fa-circle-info shrink-0"></i>
+        <span>预计气量仅供参考，实际以核销记录为准。</span>
+      </div>
+      <div class="grid grid-cols-2 gap-2 pt-1">
+        <button class="btn-danger h-11 rounded-xl text-sm" id="rejectOrder"><i class="fa-solid fa-xmark"></i>拒绝订单</button>
+        <button class="btn-primary h-11 rounded-xl text-sm" id="confirmOrder"><i class="fa-solid fa-credit-card"></i>确认并支付</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="card overflow-hidden" data-state="wait">
+    <div class="bg-gradient-to-br from-brand-500 to-brand-700 text-white px-5 pt-5 pb-5 text-center">
+      <div class="inline-flex items-center gap-2 text-base font-semibold"><span class="relative flex w-2.5 h-2.5"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-300 opacity-75"></span><span class="relative inline-flex rounded-full w-2.5 h-2.5 bg-emerald-300"></span></span>支付成功 · 等待加气员扫码核销</div>
+      <p class="text-sm text-white/80 mt-2">请向加气员出示动态码，完成扫码后订单核销</p>
+      <div class="mt-2 text-sm text-white/90"><span id="orderStation">高新区油气合建站</span> · 实付 <b id="detailAmount">¥190.00</b></div>
+      <div class="w-44 h-44 mx-auto mt-4 p-2 rounded-xl bg-white" id="dynamicQr" role="img" aria-label="动态订单核销码"></div>
+      <div class="mt-3 inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1.5 text-xs"><i class="fa-solid fa-arrows-rotate"></i>订单专属动态码 · 核销后失效</div>
+      <div class="grid grid-cols-2 gap-3 mt-4">
+        <div class="bg-white/10 rounded-xl py-2.5"><div class="text-xs text-white/70">枪号</div><div class="text-2xl font-black mt-0.5" id="displayGun">3 号</div></div>
+        <div class="bg-white/10 rounded-xl py-2.5"><div class="text-xs text-white/70">预计气量</div><div class="text-lg font-bold mt-0.5" id="detailVolume">51.28 m³</div></div>
+      </div>
+    </div>
+    <ol class="px-5 py-3 flex items-center justify-between text-xs text-ink-500" aria-label="订单进度">
+      <li class="flex items-center gap-1.5 text-ok font-semibold"><i class="fa-solid fa-circle-check text-base"></i>已支付</li>
+      <li class="flex-1 h-0.5 bg-ok mx-2"></li>
+      <li class="flex items-center gap-1.5 text-brand-500 font-semibold"><i class="fa-solid fa-qrcode text-base"></i>扫码核销</li>
+      <li class="flex-1 h-0.5 bg-ink-100 mx-2"></li>
+      <li class="flex items-center gap-1.5"><i class="fa-regular fa-circle text-base"></i>完成</li>
+    </ol>
+  </section>
+
+  <section class="card overflow-hidden" data-state="done" hidden>
+    <div class="flex items-center justify-between px-4 pt-4 pb-3"><h2 class="font-semibold">已完成订单</h2><span class="tag-ok"><i class="fa-solid fa-circle-check"></i>最近记录</span></div>
+    <ul class="divide-y divide-ink-100 text-sm" id="doneList">
+      <li>
+        <button type="button" class="flex w-full items-center gap-3 px-4 py-4 text-left transition hover:bg-page" id="doneLatestOrder" data-order-id="GS2026111314328261" data-status="已完成" data-status-key="completed" data-station="高新区油气合建站" data-amount="¥190.00" data-gun="3 号枪" data-gas="CNG" data-volume="48.72 m³" data-time="11-13 14:41" data-payment="微信支付 · 拉卡拉" data-note="本次加气已完成">
+          <span class="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-gas-cngbg text-gas-cng"><i class="fa-solid fa-gas-pump"></i></span>
+          <span class="min-w-0 flex-1">
+            <span class="block truncate font-semibold" id="doneLatestStation">高新区油气合建站</span>
+            <span class="mt-1 block truncate text-xs text-ink-500" id="doneLatestMeta">3 号枪 · CNG · 48.72 m³ · 14:41</span>
+            <span class="mt-1 block text-xs text-ink-500">实付 <b id="doneLatestPay" class="text-ink-900">¥190.00</b><span id="paymentMethod" class="font-normal"> · 微信支付 · 拉卡拉</span></span>
+          </span>
+          <span class="flex shrink-0 flex-col items-end gap-2"><span class="tag-ok">已完成</span><i class="fa-solid fa-chevron-right text-[10px] text-ink-300" aria-hidden="true"></i></span>
+        </button>
+      </li>
+      <li>
+        <button type="button" class="flex w-full items-center gap-3 px-4 py-4 text-left transition hover:bg-page" data-order-id="GS2026110621034792" data-status="已完成" data-status-key="completed" data-station="港区 LNG 物流站" data-amount="¥460.00" data-gun="6 号枪" data-gas="LNG" data-volume="96.39 kg" data-time="11-06 21:03" data-payment="支付宝 · 拉卡拉" data-note="本次加气已完成">
+          <span class="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-gas-lngbg text-gas-lng"><i class="fa-solid fa-snowflake"></i></span>
+          <span class="min-w-0 flex-1">
+            <span class="block truncate font-semibold">港区 LNG 物流站</span>
+            <span class="mt-1 block truncate text-xs text-ink-500">6 号枪 · LNG · 96.39 kg · 11-06 21:03</span>
+            <span class="mt-1 block text-xs text-ink-500">实付 <b class="text-ink-900">¥460.00</b><span class="font-normal"> · 支付宝 · 拉卡拉</span></span>
+          </span>
+          <span class="flex shrink-0 flex-col items-end gap-2"><span class="tag-ok">已完成</span><i class="fa-solid fa-chevron-right text-[10px] text-ink-300" aria-hidden="true"></i></span>
+        </button>
+      </li>
+    </ul>
+  </section>
+
+  <section class="card overflow-hidden" data-state="closed" hidden>
+    <div class="flex items-center justify-between px-4 pt-4 pb-3"><h2 class="font-semibold">已关闭订单</h2><span class="tag-mute"><i class="fa-solid fa-clock-rotate-left"></i>最近记录</span></div>
+    <ul class="divide-y divide-ink-100 text-sm" id="closedList">
+      <li>
+        <button type="button" class="flex w-full items-center gap-3 px-4 py-4 text-left transition hover:bg-page" id="closedLatestOrder" data-order-id="GS2026111314328261" data-status="已关闭" data-status-key="closed" data-station="高新区油气合建站" data-amount="未支付" data-gun="3 号枪" data-gas="CNG" data-volume="—" data-time="11-13 14:32" data-payment="—" data-note="未支付，未扣减库存；订单由司机拒绝">
+          <span class="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-ink-100 text-ink-500"><i class="fa-solid fa-gas-pump"></i></span>
+          <span class="min-w-0 flex-1">
+            <span class="block truncate font-semibold" id="closedLatestStation">高新区油气合建站</span>
+            <span class="mt-1 block truncate text-xs text-ink-500" id="closedLatestMeta">3 号枪 · CNG · 司机拒绝 · 14:32</span>
+            <span class="mt-1 block text-xs text-ink-500">未支付 · 未扣减库存</span>
+          </span>
+          <span class="flex shrink-0 flex-col items-end gap-2"><span class="tag-mute">已关闭</span><i class="fa-solid fa-chevron-right text-[10px] text-ink-300" aria-hidden="true"></i></span>
+        </button>
+      </li>
+      <li>
+        <button type="button" class="flex w-full items-center gap-3 px-4 py-4 text-left transition hover:bg-page" data-order-id="GS2026111218205683" data-status="已关闭" data-status-key="closed" data-station="城北 CNG 加气站" data-amount="未支付" data-gun="2 号枪" data-gas="CNG" data-volume="—" data-time="11-12 18:20" data-payment="—" data-note="未支付，未扣减库存；订单超时关闭">
+          <span class="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-ink-100 text-ink-500"><i class="fa-solid fa-gas-pump"></i></span>
+          <span class="min-w-0 flex-1">
+            <span class="block truncate font-semibold">城北 CNG 加气站</span>
+            <span class="mt-1 block truncate text-xs text-ink-500">2 号枪 · CNG · 超时未支付 · 11-12 18:20</span>
+            <span class="mt-1 block text-xs text-ink-500">未支付 · 未扣减库存</span>
+          </span>
+          <span class="flex shrink-0 flex-col items-end gap-2"><span class="tag-mute">已关闭</span><i class="fa-solid fa-chevron-right text-[10px] text-ink-300" aria-hidden="true"></i></span>
+        </button>
+      </li>
+    </ul>
+  </section>
+
+  <div class="grid grid-cols-2 gap-3" data-state="wait">
+    <button class="btn-ghost btn-lg" data-open="#refundSheet"><i class="fa-solid fa-rotate-left"></i>申请退款</button>
+    <button class="btn-ghost btn-lg" data-toast="正在呼叫站点客服…"><i class="fa-solid fa-headset"></i>联系客服</button>
+  </div>
+</main>
+
+<div class="sheet" id="refundSheet" role="dialog" aria-label="申请退款">
+  <div class="flex items-center justify-between px-4 h-12 border-b border-ink-100"><b>申请退款</b><button data-close aria-label="关闭"><i class="fa-solid fa-xmark text-ink-500"></i></button></div>
+  <div class="p-4 pb-8 space-y-3 text-sm">
+    <p class="text-ink-700">退款金额 <b id="refundAmount" class="text-money text-lg">¥190.00</b>，按拉卡拉原支付渠道处理；实际规则以采购方配置为准。</p>
+    <div class="space-y-2"><label class="flex items-center gap-2"><input type="radio" name="r" checked class="accent-brand-500">还未加气，不想加了</label><label class="flex items-center gap-2"><input type="radio" name="r" class="accent-brand-500">枪号选错了</label><label class="flex items-center gap-2"><input type="radio" name="r" class="accent-brand-500">其他原因</label></div>
+    <p class="text-[11px] text-ink-500">退款申请将由采购方确认；未加气订单的退款规则待确认。</p>
+    <button class="btn-primary btn-lg w-full" data-close data-toast="退款申请已提交，等待处理">提交申请</button>
+  </div>
+</div>
+<div class="sheet" id="historyDetailSheet" role="dialog" aria-modal="true" aria-labelledby="historyDetailTitle">
+  <div class="flex h-12 items-center justify-between border-b border-ink-100 px-4">
+    <b id="historyDetailTitle">订单详情</b>
+    <button data-close aria-label="关闭"><i class="fa-solid fa-xmark text-ink-500"></i></button>
+  </div>
+  <div class="space-y-4 p-4 pb-8">
+    <div class="flex items-start justify-between gap-3 rounded-xl bg-page p-4">
+      <div class="min-w-0">
+        <span id="historyDetailStatus" class="tag-ok">已完成</span>
+        <b id="historyDetailStation" class="mt-2 block truncate text-base">高新区油气合建站</b>
+      </div>
+      <div class="shrink-0 text-right">
+        <span id="historyAmountLabel" class="text-xs text-ink-500">实付金额</span>
+        <b id="historyDetailAmount" class="mt-1 block text-xl">¥190.00</b>
+      </div>
+    </div>
+    <div class="rounded-xl border border-ink-100 px-4 text-sm">
+      <div class="flex justify-between gap-3 border-b border-ink-100 py-3"><span class="text-ink-500">订单编号</span><span id="historyDetailId" class="text-right font-medium">—</span></div>
+      <div class="flex justify-between gap-3 border-b border-ink-100 py-3"><span class="text-ink-500">枪号 / 气种</span><span id="historyDetailGunGas" class="text-right font-medium">—</span></div>
+      <div class="flex justify-between gap-3 border-b border-ink-100 py-3"><span class="text-ink-500">加气量</span><span id="historyDetailVolume" class="text-right font-medium">—</span></div>
+      <div class="flex justify-between gap-3 border-b border-ink-100 py-3"><span class="text-ink-500">订单时间</span><span id="historyDetailTime" class="text-right font-medium">—</span></div>
+      <div class="flex justify-between gap-3 py-3"><span class="text-ink-500">支付方式</span><span id="historyDetailPayment" class="text-right font-medium">—</span></div>
+    </div>
+    <p id="historyDetailNote" class="rounded-lg bg-brand-50 px-3 py-2.5 text-xs leading-5 text-brand-700"></p>
+  </div>
+</div>
+<script src="assets/js/common.js?v=h5-layout-2"></script>
+<script src="assets/js/gas-store.js?v=staff-flow-1"></script>
+<script>
+  const statusLabels = { waiting_driver: '待确认', paid: '待核销', completed: '已完成', rejected: '已拒绝', closed: '已关闭', refunded: '已退款' };
+  let currentId = new URLSearchParams(location.search).get('order');
+  let currentOrder = null;
+  let showAll = !currentId;
+  const setState = state => {
+    $$('[data-state]').forEach(el => {
+      const isHidden = el.dataset.state !== state;
+      el.hidden = isHidden;
+      el.classList.toggle('hidden', isHidden);
+    });
+    $$('#stateSeg button').forEach(button => {
+      const selected = button.dataset.s === state;
+      button.classList.toggle('on', selected);
+      button.setAttribute('aria-selected', String(selected));
+    });
+  };
+  function orderVolume(order) {
+    return order.actualVolume == null ? '实际气量未登记' : `${Number(order.actualVolume).toFixed(2)} ${order.unit}`;
+  }
+  function renderHistory(target, orders) {
+    const list = $(target);
+    list.replaceChildren();
+    if (!orders.length) {
+      const empty = document.createElement('li');
+      empty.className = 'p-5 text-center text-sm text-ink-500';
+      empty.textContent = '暂无相关订单';
+      list.appendChild(empty);
+    }
+    orders.forEach(order => {
+      const item = document.createElement('li');
+      const button = document.createElement('button');
+      button.className = 'flex w-full items-center gap-3 px-4 py-4 text-left hover:bg-page';
+      const icon = document.createElement('span');
+      icon.className = 'grid h-11 w-11 shrink-0 place-items-center rounded-xl ' + (order.gas === 'LNG' ? 'bg-gas-lngbg text-gas-lng' : 'bg-gas-cngbg text-gas-cng');
+      const symbol = document.createElement('i');
+      symbol.className = order.gas === 'LNG' ? 'fa-solid fa-snowflake' : 'fa-solid fa-gas-pump';
+      icon.appendChild(symbol);
+      const content = document.createElement('span');
+      content.className = 'min-w-0 flex-1';
+      const heading = document.createElement('div');
+      heading.className = 'flex items-center justify-between gap-2';
+      const station = document.createElement('b');
+      station.className = 'truncate';
+      station.textContent = order.station;
+      const status = document.createElement('span');
+      status.className = order.status === 'completed' ? 'tag-ok' : order.status === 'waiting_driver' ? 'tag-warn' : order.status === 'paid' ? 'tag-info' : 'tag-mute';
+      status.textContent = statusLabels[order.status];
+      heading.append(station, status);
+      const meta = document.createElement('p');
+      meta.className = 'mt-1 text-xs text-ink-500';
+      meta.textContent = `${order.gun} 号枪 · ${order.gas} · ${order.status === 'completed' ? orderVolume(order) : order.reason || statusLabels[order.status]}`;
+      const foot = document.createElement('p');
+      foot.className = 'mt-2 text-xs text-ink-700';
+      foot.textContent = `${GasStore.money(order.amount)} · ${GasStore.time(order.completedAt || order.closedAt || order.createdAt)} · 查看详情 ›`;
+      content.append(heading, meta, foot);
+      button.append(icon, content);
+      button.addEventListener('click', () => {
+        if (order.status === 'waiting_driver' || order.status === 'paid') {
+          currentId = order.id;
+          showAll = false;
+          GasStore.run(() => refreshOrders());
+          return;
+        }
+        $('#historyDetailStatus').className = status.className;
+        $('#historyDetailStatus').textContent = statusLabels[order.status];
+        $('#historyDetailStation').textContent = order.station;
+        $('#historyAmountLabel').textContent = order.status === 'completed' ? '实付金额' : '订单金额';
+        $('#historyDetailAmount').textContent = GasStore.money(order.amount);
+        $('#historyDetailId').textContent = order.id;
+        $('#historyDetailGunGas').textContent = `${order.gun} 号枪 · ${order.gas}`;
+        $('#historyDetailVolume').textContent = orderVolume(order);
+        $('#historyDetailTime').textContent = GasStore.time(order.completedAt || order.closedAt || order.createdAt);
+        $('#historyDetailPayment').textContent = order.paymentMethod || '未支付';
+        $('#historyDetailNote').textContent = order.status === 'completed' ?
+          `核销人：${order.completedBy || '旧版未记录'} · ${order.actualVolume == null ? '旧版记录未登记实际气量' : '已按实际气量登记核销'}` :
+          order.reason || statusLabels[order.status];
+        openLayer('#historyDetailSheet');
+      });
+      item.appendChild(button);
+      list.appendChild(item);
+    });
+  }
+  function refreshOrders(tab) {
+    if (tab) showAll = tab === 'all';
+    let data = GasStore.read();
+    if (!data.orders.length && !currentId) {
+      GasStore.demoOrder();
+      data = GasStore.read();
+    }
+    const orders = data.orders.slice().reverse();
+    if (!currentId) currentId = (orders.find(order => order.status === 'waiting_driver') || orders[0]).id;
+    if (tab === 'confirm' || tab === 'wait') {
+      const status = tab === 'confirm' ? 'waiting_driver' : 'paid';
+      if (!orders.some(order => order.id === currentId && order.status === status)) {
+        currentId = (orders.find(order => order.status === status) || {}).id || null;
+      }
+    }
+    currentOrder = orders.find(order => order.id === currentId) || null;
+    $('#driverOrderSelect').replaceChildren(...orders.map(order => new Option(`${statusLabels[order.status]} · ${order.gun} 号枪 · ${GasStore.money(order.amount)} · ${order.id.slice(-6)}`, order.id)));
+    $('#driverOrderSelect').value = currentId || '';
+    $('#driverOrderPicker').hidden = showAll || orders.length < 2;
+    renderHistory('#allList', orders);
+    renderHistory('#doneList', orders.filter(order => order.status === 'completed'));
+    renderHistory('#closedList', orders.filter(order => ['rejected', 'closed', 'refunded'].includes(order.status)));
+    if (currentOrder) {
+      const order = currentOrder;
+      $('#orderStation').textContent = order.station;
+      $('#displayGun').textContent = `${order.gun} 号`;
+      $('#detailAmount').textContent = GasStore.money(order.amount);
+      $('#refundAmount').textContent = GasStore.money(order.amount);
+      $('#detailVolume').textContent = `${Number(order.volume).toFixed(2)} ${order.unit}`;
+      $('#pendingStation').textContent = order.station;
+      $('#pendingGun').textContent = `${order.gun} 号枪 · ${order.gas}`;
+      $('#pendingAmount').textContent = GasStore.money(order.amount);
+      $('#pendingVolume').textContent = `${Number(order.volume).toFixed(2)} ${order.unit}`;
+      $('#pendingStaff').textContent = `${order.staff || '加气员'} · ${GasStore.time(order.createdAt)}`;
+    }
+    const state = currentOrder ? ({ waiting_driver: 'confirm', paid: 'wait', completed: 'done' }[currentOrder.status] || 'closed') : 'empty';
+    const show = showAll ? 'all' : tab === 'done' || tab === 'closed' ? tab : state;
+    $('#orderEmpty').textContent = tab === 'confirm' ? '暂无待确认订单' : tab === 'wait' ? '暂无待核销订单' : '未找到当前订单，请选择其他订单';
+    setState(show);
+    refreshCode();
+  }
+  $('#driverOrderSelect').addEventListener('change', () => GasStore.run(() => {
+    currentId = $('#driverOrderSelect').value;
+    showAll = false;
+    refreshOrders();
+  }));
+  $('#stateSeg').addEventListener('click', e => {
+    const button = e.target.closest('button[data-s]');
+    if (button) GasStore.run(() => refreshOrders(button.dataset.s));
+  });
+  $('#confirmOrder').addEventListener('click', () => GasStore.run(() => {
+    GasStore.pay(currentId, '微信支付 · 拉卡拉（模拟）');
+    refreshOrders();
+    toast('订单已确认，拉卡拉支付成功；请出示动态核销码');
+  }));
+  $('#rejectOrder').addEventListener('click', () => GasStore.run(() => {
+    GasStore.reject(currentId);
+    refreshOrders();
+  }));
+  const refreshCode = () => {
+    if (currentOrder && currentOrder.status === 'paid') fakeQR(document.getElementById('dynamicQr'), Date.now());
+  };
+  GasStore.run(() => refreshOrders());
+  if (document.getElementById('dynamicQr')) {
+    refreshCode();
+    window.setInterval(refreshCode, 15000);
+  }
+  window.addEventListener('storage', e => {
+    if (e.key === GasStore.key || e.key === null) GasStore.run(() => refreshOrders());
+  });
+  window.addEventListener('pageshow', () => GasStore.run(() => refreshOrders()));
+</script>
+</body>
+</html>

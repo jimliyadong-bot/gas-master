@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org">
+<head>
+	<th:block th:include="include :: header('新增枪号')" />
+</head>
+<body class="white-bg">
+	<div class="wrapper wrapper-content animated fadeInRight ibox-content">
+		<form class="form-horizontal m" id="form-gun-add">
+			<div class="form-group">
+				<label class="col-sm-3 control-label is-required">所属站点：</label>
+				<div class="col-sm-8">
+					<select class="form-control" name="stationId" id="stationId" required>
+						<option value="">请选择站点</option>
+						<option th:each="station : ${stations}" th:text="${station.stationName} + '（' + ${station.stationCode} + '）'" th:value="${station.stationId}"></option>
+					</select>
+				</div>
+			</div>
+			<div class="form-group">
+				<label class="col-sm-3 control-label is-required">枪号：</label>
+				<div class="col-sm-8">
+					<input class="form-control" type="number" name="gunNo" id="gunNo" min="1" required>
+				</div>
+			</div>
+			<div class="form-group">
+				<label class="col-sm-3 control-label is-required">气种：</label>
+				<div class="col-sm-8">
+					<select class="form-control" name="gasType" id="gasType" required>
+						<option value="">请选择气种</option>
+						<option th:each="dict : ${@dict.getType('gas_type')}" th:text="${dict.dictLabel}" th:value="${dict.dictValue}"></option>
+					</select>
+					<span class="help-block m-b-none">CNG 按 m³、LNG 按 kg 计量，数量不跨气种汇总</span>
+				</div>
+			</div>
+			<div class="form-group">
+				<label class="col-sm-3 control-label">状态：</label>
+				<div class="col-sm-8">
+					<div class="radio-box" th:each="dict : ${@dict.getType('sys_normal_disable')}">
+						<input type="radio" th:id="${dict.dictCode}" name="status" th:value="${dict.dictValue}" th:checked="${dict.default}">
+						<label th:for="${dict.dictCode}" th:text="${dict.dictLabel}"></label>
+					</div>
+				</div>
+			</div>
+			<div class="form-group">
+				<label class="col-sm-3 control-label">备注：</label>
+				<div class="col-sm-8">
+					<textarea id="remark" name="remark" class="form-control"></textarea>
+				</div>
+			</div>
+		</form>
+	</div>
+	<th:block th:include="include :: footer" />
+	<script type="text/javascript">
+		var prefix = ctx + "gas/gun";
+
+		$("#form-gun-add").validate({
+			onkeyup: false,
+			rules: {
+				gunNo: {
+					digits: true,
+					min: 1,
+					remote: {
+						url: prefix + "/checkGunUnique",
+						type: "post",
+						dataType: "json",
+						data: {
+							"stationId": function() { return $("#stationId").val(); },
+							"gunNo": function() { return $.common.trim($("#gunNo").val()); }
+						}
+					}
+				}
+			},
+			messages: {
+				"gunNo": { remote: "该站点下已存在此枪号" }
+			},
+			focusCleanup: true
+		});
+
+		function submitHandler() {
+			if ($.validate.form()) {
+				$.operate.save(prefix + "/add", $('#form-gun-add').serialize());
+			}
+		}
+	</script>
+</body>
+</html>

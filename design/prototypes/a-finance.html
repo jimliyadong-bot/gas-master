@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>采购付款与销售收款</title>
+<link rel="stylesheet" href="assets/tailwind.css">
+<link rel="stylesheet" href="assets/vendor/fontawesome/css/all.min.css">
+</head>
+<body data-shell="admin" data-crumb="账务/采购付款与收款">
+<main id="main" class="p-6 space-y-4">
+  <div class="flex items-center justify-between">
+    <div><h1 class="text-xl font-bold">采购付款与销售收款</h1><p class="text-sm text-ink-500 mt-0.5">分别记录采购方付给站点的采购款，以及消费者通过拉卡拉支付的销售款</p></div>
+    <button class="btn-ghost"><i class="fa-solid fa-download"></i>导出记录</button>
+  </div>
+  <section class="grid grid-cols-4 gap-4">
+    <div class="card p-4"><div class="kpi-label">本月采购金额</div><div class="kpi-value mt-1">¥398,640</div><div class="text-xs text-ink-500 mt-1">采购量 124,800 m³</div></div>
+    <div class="card p-4"><div class="kpi-label">本月采购已付款</div><div class="kpi-value mt-1">¥352,240</div><div class="text-xs text-ink-500 mt-1">待付 ¥46,400</div></div>
+    <div class="card p-4"><div class="kpi-label">本月销售实收</div><div class="kpi-value mt-1">¥1,286,420</div><div class="text-xs text-ink-500 mt-1">拉卡拉聚合支付</div></div>
+    <div class="card p-4"><div class="kpi-label">待跟进票据</div><div class="kpi-value mt-1 text-amber-600">3 笔</div><div class="text-xs text-ink-500 mt-1">按采购批次跟踪</div></div>
+  </section>
+  <section class="card">
+    <div class="px-5 pt-3 border-b border-ink-100 flex gap-6 text-sm" data-tabs>
+      <button class="on h-10 border-b-2 border-transparent text-ink-500 [&.on]:text-ink-900 [&.on]:border-brand-500 font-semibold" data-pane="buy">采购付款</button>
+      <button class="h-10 border-b-2 border-transparent text-ink-500 [&.on]:text-ink-900 [&.on]:border-brand-500 font-semibold" data-pane="sale">销售收款</button>
+      <button class="h-10 border-b-2 border-transparent text-ink-500 [&.on]:text-ink-900 [&.on]:border-brand-500 font-semibold" data-pane="invoice">票据跟进</button>
+    </div>
+    <div data-pane-id="buy">
+      <div class="px-5 py-3 text-xs text-ink-500">采购批次可分次付款；录入付款日期、方式、凭证和备注，便于采购方与站点核对。</div>
+      <table class="tbl"><thead><tr><th>付款日期</th><th>站点 / 气种</th><th>采购批次</th><th>付款方式</th><th class="num">采购金额</th><th class="num">本次付款</th><th>凭证</th><th>状态</th><th>操作</th></tr></thead>
+        <tbody>
+          <tr><td>11-12</td><td>高新区油气合建站 · CNG</td><td class="font-mono text-xs">PO-20261112-018</td><td>银行转账</td><td class="num">¥62,400</td><td class="num">¥40,000</td><td>回单-1112.pdf</td><td><span class="tag-warn">部分付款</span></td><td class="text-brand-500"><button data-toast="原型：补录付款">补录</button></td></tr>
+          <tr><td>11-10</td><td>城北 CNG 加气站 · CNG</td><td class="font-mono text-xs">PO-20261110-011</td><td>银行转账</td><td class="num">¥49,280</td><td class="num">¥49,280</td><td>回单-1110.pdf</td><td><span class="tag-ok">已付清</span></td><td class="text-brand-500"><button data-toast="原型：查看付款凭证">查看</button></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div data-pane-id="sale" hidden>
+      <div class="px-5 py-3 text-xs text-ink-500">按订单记录拉卡拉支付成功、退款和结算状态；渠道明细以拉卡拉账单/接口实际能力为准。</div>
+      <table class="tbl"><thead><tr><th>时间</th><th>订单号</th><th>站点</th><th>支付渠道</th><th class="num">订单金额</th><th class="num">优惠</th><th class="num">实收</th><th>状态</th></tr></thead>
+        <tbody>
+          <tr><td>11-13 14:32</td><td class="font-mono text-xs">GS2026111314328261</td><td>高新区油气合建站</td><td>微信支付 · 拉卡拉</td><td class="num">¥200.00</td><td class="num text-money">-¥10.00</td><td class="num">¥190.00</td><td><span class="tag-ok">支付成功</span></td></tr>
+          <tr><td>11-13 14:20</td><td class="font-mono text-xs">GS2026111314200172</td><td>城北 CNG 加气站</td><td>支付宝 · 拉卡拉</td><td class="num">¥300.00</td><td class="num text-money">-¥18.00</td><td class="num">¥282.00</td><td><span class="tag-ok">支付成功</span></td></tr>
+          <tr><td>11-13 13:58</td><td class="font-mono text-xs">GS2026111313580035</td><td>港区 LNG 物流站</td><td>云闪付 · 拉卡拉</td><td class="num">¥500.00</td><td class="num">—</td><td class="num">¥500.00</td><td><span class="tag-warn">退款处理中</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div data-pane-id="invoice" hidden>
+      <div class="px-5 py-3 text-xs text-ink-500">采购批次接近用完时提醒管理员关注票据；实际开票方、通知方式和触发规则待业务确认。</div>
+      <table class="tbl"><thead><tr><th>站点</th><th>采购批次</th><th>采购日期</th><th class="num">采购量</th><th class="num">当前剩余</th><th>付款状态</th><th>票据状态</th><th>操作</th></tr></thead>
+        <tbody>
+          <tr class="bg-amber-50/40"><td>高新区油气合建站</td><td class="font-mono text-xs">PO-20261112-018</td><td>11-12</td><td class="num">20,000 m³</td><td class="num">1,640 m³</td><td><span class="tag-warn">部分付款</span></td><td><span class="tag-warn">待开票</span></td><td class="text-brand-500"><button data-toast="已提醒管理员关注开票">提醒</button></td></tr>
+          <tr><td>城北 CNG 加气站</td><td class="font-mono text-xs">PO-20261110-011</td><td>11-10</td><td class="num">16,000 m³</td><td class="num">8,240 m³</td><td><span class="tag-ok">已付清</span></td><td><span class="tag-ok">已登记</span></td><td class="text-brand-500"><button data-toast="原型：查看票据">查看</button></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+</main>
+<script src="assets/js/common.js"></script>
+</body>
+</html>

@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.gas.mapper.GasCouponTemplateMapper">
+    <resultMap type="GasCouponTemplate" id="GasCouponTemplateResult">
+        <id property="templateId" column="template_id"/>
+        <result property="buyerId" column="buyer_id"/>
+        <result property="buyerName" column="buyer_name"/>
+        <result property="name" column="name"/>
+        <result property="faceValue" column="face_value"/>
+        <result property="thresholdAmount" column="threshold_amount"/>
+        <result property="validType" column="valid_type"/>
+        <result property="validFrom" column="valid_from"/>
+        <result property="validTo" column="valid_to"/>
+        <result property="validDays" column="valid_days"/>
+        <result property="totalQty" column="total_qty"/>
+        <result property="issuedQty" column="issued_qty"/>
+        <result property="status" column="status"/>
+        <result property="usedQty" column="used_qty"/>
+        <result property="discountTotal" column="discount_total"/>
+        <result property="createBy" column="create_by"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateBy" column="update_by"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="remark" column="remark"/>
+    </resultMap>
+
+    <sql id="selectTemplateVo">
+        select t.*, b.buyer_name,
+            (select count(1) from gas_coupon c join gas_order o on c.used_order_id=o.order_id
+                where c.template_id=t.template_id and o.status='COMPLETED') used_qty,
+            (select ifnull(sum(o.discount_amount),0) from gas_coupon c join gas_order o on c.used_order_id=o.order_id
+                where c.template_id=t.template_id and o.status='COMPLETED') discount_total
+        from gas_coupon_template t
+        join gas_buyer b on t.buyer_id=b.buyer_id
+    </sql>
+
+    <select id="selectTemplateList" parameterType="GasCouponTemplate" resultMap="GasCouponTemplateResult">
+        <include refid="selectTemplateVo"/>
+        <where>
+            <if test="templateId != null">and t.template_id=#{templateId}</if>
+            <if test="buyerId != null">and t.buyer_id=#{buyerId}</if>
+            <if test="name != null and name != ''">and t.name like concat('%',#{name},'%')</if>
+            <if test="status != null and status != ''">and t.status=#{status}</if>
+        </where>
+        order by t.template_id desc
+    </select>
+
+    <select id="selectTemplateById" parameterType="Long" resultMap="GasCouponTemplateResult">
+        <include refid="selectTemplateVo"/>
+        where t.template_id=#{templateId}
+    </select>
+
+    <select id="selectTemplateByIdForUpdate" parameterType="Long" resultMap="GasCouponTemplateResult">
+        select * from gas_coupon_template where template_id=#{templateId} for update
+    </select>
+
+    <insert id="insertTemplate" parameterType="GasCouponTemplate" useGeneratedKeys="true" keyProperty="templateId">
+        insert into gas_coupon_template(buyer_id,name,face_value,threshold_amount,valid_type,valid_from,valid_to,
+            valid_days,total_qty,issued_qty,status,create_by,create_time,remark)
+        values(#{buyerId},#{name},#{faceValue},#{thresholdAmount},#{validType},#{validFrom},#{validTo},
+            #{validDays},#{totalQty},0,#{status},#{createBy},sysdate(),#{remark})
+    </insert>
+
+    <update id="updateTemplate" parameterType="GasCouponTemplate">
+        update gas_coupon_template
+        set buyer_id=#{buyerId},name=#{name},face_value=#{faceValue},threshold_amount=#{thresholdAmount},
+            valid_type=#{validType},valid_from=#{validFrom},valid_to=#{validTo},valid_days=#{validDays},
+            total_qty=#{totalQty},status=#{status},update_by=#{updateBy},update_time=sysdate(),remark=#{remark}
+        where template_id=#{templateId}
+    </update>
+
+    <update id="increaseIssued" parameterType="Long">
+        update gas_coupon_template
+        set issued_qty=issued_qty+1
+        where template_id=#{templateId} and status='0' and issued_qty&lt;total_qty
+          and (valid_type='DAYS' or (valid_type='FIXED' and valid_from&lt;=sysdate() and valid_to&gt;sysdate()))
+    </update>
+</mapper>

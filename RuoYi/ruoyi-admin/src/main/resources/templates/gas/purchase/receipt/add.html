@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org">
+<head>
+	<th:block th:include="include :: header('到货登记')" />
+</head>
+<body class="white-bg">
+	<div class="wrapper wrapper-content animated fadeInRight ibox-content">
+		<form class="form-horizontal m" id="form-receipt-add">
+			<div class="form-group">
+				<label class="col-sm-3 control-label is-required">采购批次：</label>
+				<div class="col-sm-8">
+					<select class="form-control" name="batchId" id="batchId" required>
+						<option value="">请选择批次</option>
+						<option th:each="b : ${batches}" th:text="${b.batchNo} + '（' + ${b.stationName} + ' ' + ${b.gasType} + ' 采购' + ${b.qty} + '）'" th:value="${b.batchId}"></option>
+					</select>
+				</div>
+			</div>
+			<div class="form-group">
+				<label class="col-sm-3 control-label is-required">到货数量：</label>
+				<div class="col-sm-8">
+					<input class="form-control" type="number" name="qty" id="qty" min="0.01" step="0.01" required>
+					<span class="help-block m-b-none">入库后立即增加站点库存（先进先出扣减单位）</span>
+				</div>
+			</div>
+			<div class="form-group">
+				<label class="col-sm-3 control-label is-required">到货时间：</label>
+				<div class="col-sm-8">
+					<input class="form-control" type="text" name="receivedAt" id="receivedAt" th:value="${#dates.format(new java.util.Date(), 'yyyy-MM-dd HH:mm:ss')}" required>
+					<span class="help-block m-b-none">先进先出按此时间排序，请如实填写</span>
+				</div>
+			</div>
+			<div class="form-group">
+				<label class="col-sm-3 control-label">备注：</label>
+				<div class="col-sm-8">
+					<textarea id="remark" name="remark" class="form-control"></textarea>
+				</div>
+			</div>
+		</form>
+	</div>
+	<th:block th:include="include :: footer" />
+	<script type="text/javascript">
+		var prefix = ctx + "gas/purchase/receipt";
+
+		function submitHandler() {
+			if ($.validate.form()) {
+				$.operate.save(prefix + "/add", $("#form-receipt-add").serialize(), function(result) {
+					if (result.code === 0) {
+						$.modal.msgSuccess(result.msg);
+					}
+				});
+			}
+		}
+	</script>
+</body>
+</html>

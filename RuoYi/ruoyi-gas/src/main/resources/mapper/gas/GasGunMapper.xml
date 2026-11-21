@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.gas.mapper.GasGunMapper">
+
+	<resultMap type="GasGun" id="GasGunResult">
+		<id     property="gunId"       column="gun_id"       />
+		<result property="stationId"   column="station_id"   />
+		<result property="gunNo"       column="gun_no"       />
+		<result property="gasType"     column="gas_type"     />
+		<result property="status"      column="status"       />
+		<result property="createBy"    column="create_by"    />
+		<result property="createTime"  column="create_time"  />
+		<result property="updateBy"    column="update_by"    />
+		<result property="updateTime"  column="update_time"  />
+		<result property="remark"      column="remark"       />
+		<result property="stationName" column="station_name" />
+		<result property="stationCode" column="station_code" />
+		<result property="buyerName"   column="buyer_name"   />
+	</resultMap>
+
+	<sql id="selectGunVo">
+        select g.gun_id, g.station_id, g.gun_no, g.gas_type, g.status,
+               g.create_by, g.create_time, g.update_by, g.update_time, g.remark,
+               s.station_name, s.station_code, b.buyer_name
+        from gas_gun g
+        left join gas_station s on g.station_id = s.station_id
+        left join gas_buyer b on s.buyer_id = b.buyer_id
+    </sql>
+
+	<select id="selectGunList" parameterType="GasGun" resultMap="GasGunResult">
+		<include refid="selectGunVo"/>
+		<where>
+			<if test="stationId != null and stationId != 0">
+				AND g.station_id = #{stationId}
+			</if>
+			<if test="buyerId != null and buyerId != 0">
+				AND s.buyer_id = #{buyerId}
+			</if>
+			<if test="gunNo != null">
+				AND g.gun_no = #{gunNo}
+			</if>
+			<if test="gasType != null and gasType != ''">
+				AND g.gas_type = #{gasType}
+			</if>
+			<if test="status != null and status != ''">
+				AND g.status = #{status}
+			</if>
+		</where>
+		order by g.station_id, g.gun_no
+	</select>
+
+	<select id="selectGunById" parameterType="Long" resultMap="GasGunResult">
+		<include refid="selectGunVo"/>
+		where g.gun_id = #{gunId}
+	</select>
+
+	<select id="checkGunUnique" resultMap="GasGunResult">
+		<include refid="selectGunVo"/>
+		where g.station_id = #{stationId} and g.gun_no = #{gunNo} limit 1
+	</select>
+
+	<select id="countGunByStationId" parameterType="Long" resultType="int">
+		select count(1) from gas_gun where station_id = #{stationId}
+	</select>
+
+	<insert id="insertGun" parameterType="GasGun" useGeneratedKeys="true" keyProperty="gunId">
+		insert into gas_gun(
+			<if test="stationId != null and stationId != 0">station_id,</if>
+			<if test="gunNo != null">gun_no,</if>
+			<if test="gasType != null and gasType != ''">gas_type,</if>
+			<if test="status != null and status != ''">status,</if>
+			<if test="remark != null">remark,</if>
+			<if test="createBy != null and createBy != ''">create_by,</if>
+			create_time
+		)values(
+			<if test="stationId != null and stationId != 0">#{stationId},</if>
+			<if test="gunNo != null">#{gunNo},</if>
+			<if test="gasType != null and gasType != ''">#{gasType},</if>
+			<if test="status != null and status != ''">#{status},</if>
+			<if test="remark != null">#{remark},</if>
+			<if test="createBy != null and createBy != ''">#{createBy},</if>
+			sysdate()
+		)
+	</insert>
+
+	<update id="updateGun" parameterType="GasGun">
+		update gas_gun
+		<set>
+			<if test="stationId != null and stationId != 0">station_id = #{stationId},</if>
+			<if test="gunNo != null">gun_no = #{gunNo},</if>
+			<if test="gasType != null and gasType != ''">gas_type = #{gasType},</if>
+			<if test="status != null and status != ''">status = #{status},</if>
+			<if test="remark != null">remark = #{remark},</if>
+			<if test="updateBy != null and updateBy != ''">update_by = #{updateBy},</if>
+			update_time = sysdate()
+		</set>
+		where gun_id = #{gunId}
+	</update>
+
+	<delete id="deleteGunByIds" parameterType="Long">
+		delete from gas_gun where gun_id in
+		<foreach collection="array" item="gunId" open="(" separator="," close=")">
+			#{gunId}
+		</foreach>
+	</delete>
+
+</mapper>

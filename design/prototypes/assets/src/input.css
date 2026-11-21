@@ -1,0 +1,104 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ===== 原型公共组件（设计令牌见 design/specs/Design_Spec.md） ===== */
+@layer base {
+  html { -webkit-text-size-adjust: 100%; }
+  body { @apply font-sans text-ink-900 bg-page antialiased; font-variant-numeric: tabular-nums; }
+  :focus-visible { outline: 2px solid #4F8FF2; outline-offset: 2px; }
+}
+
+@layer components {
+  .card { @apply bg-white rounded-xl2 shadow-card; }
+  .btn { @apply inline-flex items-center justify-center gap-1.5 rounded-lg px-3.5 h-9 text-sm font-semibold transition select-none; }
+  .btn:active { transform: scale(.97); }
+  .btn:disabled, .btn.is-disabled { @apply opacity-40 pointer-events-none; }
+  .btn-primary { @apply btn bg-brand-500 text-white hover:bg-brand-600; }
+  .btn-ghost { @apply btn bg-white text-ink-700 ring-1 ring-ink-300 hover:bg-ink-100; }
+  .btn-soft { @apply btn bg-brand-50 text-brand-600 hover:bg-brand-100; }
+  .btn-danger { @apply btn bg-white text-bad ring-1 ring-bad/40 hover:bg-red-50; }
+  .btn-lg { @apply h-12 text-base rounded-xl; }
+  .btn-sm { @apply h-7 px-2.5 text-xs rounded-md; }
+
+  .tag { @apply inline-flex items-center gap-1 rounded px-1.5 h-5 text-[11px] font-semibold leading-none whitespace-nowrap; }
+  .tag-cng { @apply tag bg-gas-cngbg text-gas-cng; }
+  .tag-lng { @apply tag bg-gas-lngbg text-gas-lng; }
+  .tag-ok { @apply tag bg-emerald-50 text-ok; }
+  .tag-warn { @apply tag bg-amber-50 text-amber-700; }
+  .tag-bad { @apply tag bg-red-50 text-bad; }
+  .tag-info { @apply tag bg-brand-50 text-brand-600; }
+  .tag-mute { @apply tag bg-ink-100 text-ink-700; }
+
+  .kpi-label { @apply text-xs text-ink-500; }
+  .kpi-value { @apply text-2xl font-bold text-ink-900 tracking-tight; }
+  .delta-up { @apply text-xs font-semibold text-ok; }
+  .delta-down { @apply text-xs font-semibold text-bad; }
+
+  .seg { @apply inline-flex p-0.5 rounded-lg bg-ink-100; }
+  .seg > button { @apply px-3 h-7 rounded-md text-xs font-semibold text-ink-700 transition; }
+  .seg > button.on { @apply bg-white text-ink-900 shadow-sm; }
+
+  .field { @apply w-full h-9 rounded-lg ring-1 ring-ink-300 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-brand-400 placeholder:text-ink-500; }
+  .label { @apply block text-xs font-medium text-ink-700 mb-1; }
+
+  /* 表格（后台） */
+  .tbl { @apply w-full text-sm; }
+  .tbl th { @apply text-left font-medium text-ink-500 text-xs bg-[#F8FAFC] px-3 h-10 border-b border-ink-100 whitespace-nowrap; }
+  .tbl td { @apply px-3 h-12 border-b border-ink-100 whitespace-nowrap; }
+  .tbl tbody tr:hover { @apply bg-brand-50/40; }
+  .num { @apply text-right; font-variant-numeric: tabular-nums; }
+
+  .dot { @apply inline-block w-1.5 h-1.5 rounded-full; }
+  .divider { @apply h-px bg-ink-100; }
+
+  /* 移动端壳 */
+  .m-page {
+    --mobile-width: 390px;
+    --mobile-safe-bottom: env(safe-area-inset-bottom, 0px);
+    --mobile-tabbar-height: calc(56px + var(--mobile-safe-bottom));
+    width: 100%;
+    max-width: var(--mobile-width);
+    margin-inline: auto;
+  }
+  .m-page[data-tabbar] { padding-bottom: calc(var(--mobile-tabbar-height) + 16px); }
+  .m-page.m-pay-page { padding-bottom: calc(var(--mobile-tabbar-height) + 104px); }
+  .m-status { @apply h-11 px-6 flex items-center justify-between text-[15px] font-semibold text-ink-900 bg-white; }
+  .m-nav { @apply h-11 px-3 flex items-center justify-between bg-white border-b border-ink-100 sticky top-0 z-30; }
+  .m-tabbar {
+    @apply fixed bottom-0 inset-x-0 mx-auto bg-white/95 backdrop-blur border-t border-ink-100 flex z-30;
+    max-width: var(--mobile-width);
+    height: var(--mobile-tabbar-height);
+    padding-bottom: var(--mobile-safe-bottom);
+  }
+  .m-tabbar a { @apply flex-1 flex flex-col items-center justify-center gap-0.5 text-[11px] text-ink-500; }
+  .m-tabbar a.on { @apply text-brand-500 font-semibold; }
+  .m-tabbar i { @apply text-lg; }
+  .m-paybar { bottom: var(--mobile-tabbar-height); max-width: var(--mobile-width); }
+  .m-page .sheet {
+    max-width: var(--mobile-width);
+    max-height: calc(100vh - 16px);
+    max-height: calc(100dvh - 16px);
+    overflow-y: auto;
+    padding-bottom: var(--mobile-safe-bottom);
+  }
+
+  /* 后台侧栏 */
+  .side-link { @apply flex items-center gap-2.5 h-9 px-3 rounded-lg text-[13px] text-slate-300 hover:bg-white/5 hover:text-white transition; }
+  .side-link.on { @apply bg-brand-500 text-white font-semibold; }
+  .side-link i { @apply w-4 text-center text-[13px] opacity-90; }
+
+  /* 弹层 */
+  .sheet-mask { @apply fixed inset-0 bg-black/40 z-40 hidden; }
+  .sheet-mask.show { @apply block; }
+  .sheet { @apply fixed inset-x-0 bottom-0 mx-auto max-w-[430px] bg-white rounded-t-2xl z-50 translate-y-full transition-transform duration-200; }
+  .sheet.show { @apply translate-y-0; }
+  .drawer { @apply fixed top-0 right-0 h-full w-[560px] max-w-full bg-white shadow-pop z-50 translate-x-full transition-transform duration-200 flex flex-col; }
+  .drawer.show { @apply translate-x-0; }
+  .toast { @apply fixed left-1/2 top-1/3 -translate-x-1/2 bg-ink-900/90 text-white text-sm px-4 py-2.5 rounded-lg z-[60] pointer-events-none opacity-0 transition-opacity; }
+  .toast.show { @apply opacity-100; }
+}
+
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { scrollbar-width: none; }
+.qr-bg { background-image: linear-gradient(90deg,#17202E 50%,transparent 0), linear-gradient(#17202E 50%,transparent 0); }

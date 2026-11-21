@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org">
+<head>
+	<th:block th:include="include :: header('新增枪价')" />
+</head>
+<body class="white-bg">
+	<div class="wrapper wrapper-content animated fadeInRight ibox-content">
+		<form class="form-horizontal m" id="form-price-add">
+			<div class="form-group">
+				<label class="col-sm-3 control-label is-required">选择枪：</label>
+				<div class="col-sm-8">
+					<select class="form-control" name="gunId" id="gunId" required>
+						<option value="">请选择枪（站点 - 枪号 - 气种）</option>
+						<option th:each="gun : ${guns}" th:value="${gun.gunId}"
+							th:text="${gun.stationName} + ' - ' + ${gun.gunNo} + '号 - ' + ${gun.gasType}"></option>
+					</select>
+				</div>
+			</div>
+			<div class="form-group">
+				<label class="col-sm-3 control-label is-required">销售单价：</label>
+				<div class="col-sm-8">
+					<input class="form-control" type="number" step="0.0001" name="price" id="price" placeholder="元/m³ 或 元/kg，最多4位小数" required>
+				</div>
+			</div>
+			<div class="form-group">
+				<label class="col-sm-3 control-label is-required">生效时间：</label>
+				<div class="col-sm-8">
+					<input class="form-control time-input" type="text" name="effectiveFrom" id="effectiveFrom" th:value="${now}" required>
+					<span class="help-block m-b-none">保存后自动结束该枪的旧价（旧价失效时间 = 本价格生效时间），历史保留</span>
+				</div>
+			</div>
+			<div class="form-group">
+				<label class="col-sm-3 control-label">调价说明：</label>
+				<div class="col-sm-8">
+					<textarea id="remark" name="remark" class="form-control"></textarea>
+				</div>
+			</div>
+		</form>
+	</div>
+	<th:block th:include="include :: footer" />
+	<script type="text/javascript">
+		var prefix = ctx + "gas/price";
+
+		$("#form-price-add").validate({
+			onkeyup: false,
+			rules: {
+				price: { number: true, min: 0.0001 }
+			},
+			focusCleanup: true
+		});
+
+		function submitHandler() {
+			if ($.validate.form()) {
+				$.operate.save(prefix + "/add", $('#form-price-add').serialize());
+			}
+		}
+	</script>
+</body>
+</html>

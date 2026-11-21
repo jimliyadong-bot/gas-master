@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.gas.mapper.GasPurchasePaymentMapper">
+
+	<resultMap type="GasPurchasePayment" id="GasPurchasePaymentResult">
+		<id     property="paymentId"   column="payment_id"   />
+		<result property="batchId"     column="batch_id"     />
+		<result property="amount"      column="amount"       />
+		<result property="paidAt"      column="paid_at"      />
+		<result property="payMethod"   column="pay_method"   />
+		<result property="voucherUrl"  column="voucher_url"  />
+		<result property="createBy"    column="create_by"    />
+		<result property="createTime"  column="create_time"  />
+		<result property="remark"      column="remark"       />
+		<result property="batchNo"     column="batch_no"     />
+		<result property="stationName" column="station_name" />
+		<result property="buyerName"   column="buyer_name"   />
+	</resultMap>
+
+	<sql id="selectPaymentVo">
+        select p.payment_id, p.batch_id, p.amount, p.paid_at, p.pay_method, p.voucher_url,
+               p.create_by, p.create_time, p.remark,
+               b.batch_no, s.station_name, bu.buyer_name
+        from gas_purchase_payment p
+        left join gas_purchase_batch b on p.batch_id = b.batch_id
+        left join gas_station s on b.station_id = s.station_id
+        left join gas_buyer bu on b.buyer_id = bu.buyer_id
+    </sql>
+
+	<select id="selectPaymentList" parameterType="GasPurchasePayment" resultMap="GasPurchasePaymentResult">
+		<include refid="selectPaymentVo"/>
+		<where>
+			<if test="batchId != null and batchId != 0">
+				AND p.batch_id = #{batchId}
+			</if>
+			<if test="batchNo != null and batchNo != ''">
+				AND b.batch_no like concat('%', #{batchNo}, '%')
+			</if>
+			<if test="payMethod != null and payMethod != ''">
+				AND p.pay_method = #{payMethod}
+			</if>
+			<if test="params.beginDate != null and params.beginDate != ''">
+				AND p.paid_at &gt;= #{params.beginDate}
+			</if>
+			<if test="params.endDate != null and params.endDate != ''">
+				AND p.paid_at &lt;= #{params.endDate}
+			</if>
+		</where>
+		order by p.paid_at desc, p.payment_id desc
+	</select>
+
+	<select id="selectPaymentById" parameterType="Long" resultMap="GasPurchasePaymentResult">
+		<include refid="selectPaymentVo"/>
+		where p.payment_id = #{paymentId}
+	</select>
+
+	<insert id="insertPayment" parameterType="GasPurchasePayment" useGeneratedKeys="true" keyProperty="paymentId">
+		insert into gas_purchase_payment(
+			batch_id, amount, paid_at, pay_method,
+			<if test="voucherUrl != null and voucherUrl != ''">voucher_url,</if>
+			<if test="remark != null">remark,</if>
+			<if test="createBy != null and createBy != ''">create_by,</if>
+			create_time
+		)values(
+			#{batchId}, #{amount}, #{paidAt}, #{payMethod},
+			<if test="voucherUrl != null and voucherUrl != ''">#{voucherUrl},</if>
+			<if test="remark != null">#{remark},</if>
+			<if test="createBy != null and createBy != ''">#{createBy},</if>
+			sysdate()
+		)
+	</insert>
+
+	<delete id="deletePaymentByIds" parameterType="Long">
+		delete from gas_purchase_payment where payment_id in
+		<foreach collection="array" item="paymentId" open="(" separator="," close=")">
+			#{paymentId}
+		</foreach>
+	</delete>
+
+	<select id="sumPaidByBatch" parameterType="Long" resultType="java.math.BigDecimal">
+		select ifnull(sum(amount), 0) from gas_purchase_payment where batch_id = #{batchId} for update
+	</select>
+
+	<select id="countPaymentByBatchIds" parameterType="Long" resultType="int">
+		select count(1) from gas_purchase_payment where batch_id in
+		<foreach collection="array" item="batchId" open="(" separator="," close=")">
+			#{batchId}
+		</foreach>
+	</select>
+
+</mapper>

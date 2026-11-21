@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>班次记录 · 加气员</title>
+<link rel="stylesheet" href="assets/tailwind.css?v=h5-layout-2">
+<link rel="stylesheet" href="assets/vendor/fontawesome/css/all.min.css">
+<style>
+  .records-page [hidden] { display: none !important; }
+  .records-filter { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .records-filter .seg { padding: 4px; border-radius: 12px; }
+  .records-filter .seg > button { height: 34px; padding: 0 16px; border-radius: 9px; font-size: 13px; }
+  .records-filter .seg > button.on { background: #2a78d6; color: #fff; }
+  .records-date { min-width: 0; padding: 9px 10px; border: 1px solid #e4e8ee; border-radius: 10px; background: #fff; }
+  .records-date input { width: 126px; min-width: 0; background: transparent; color: #475467; font-size: 12px; outline: none; }
+  .records-overview { padding: 18px; border-radius: 18px; background: linear-gradient(120deg, #173b69, #2a78d6); color: #fff; }
+  .records-station { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; }
+  .records-period { margin-top: 16px; font-size: 12px; color: #d3e4fa; }
+  .records-revenue { margin-top: 4px; font-size: 30px; font-weight: 700; line-height: 1.2; letter-spacing: -.5px; }
+  .records-metrics { display: grid; grid-template-columns: 1fr 1fr 1fr; margin-top: 18px; padding-top: 14px; border-top: 1px solid #ffffff30; }
+  .records-metrics > div + div { border-left: 1px solid #ffffff30; padding-left: 12px; }
+  .records-metrics span { display: block; color: #d3e4fa; font-size: 11px; }
+  .records-metrics b { display: block; margin-top: 4px; font-size: 18px; }
+  .records-heading { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .records-heading h2 { font-size: 14px; font-weight: 600; }
+  .handover-time { margin-top: 10px; color: #8a94a6; font-size: 12px; }
+  .handover-total { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 12px; padding: 10px 12px; border-radius: 10px; background: #f4f6f9; font-size: 12px; }
+  .handover-total b { color: #17202e; font-size: 13px; }
+  .record-row { display: flex; align-items: center; gap: 10px; padding: 14px 16px; }
+  .record-gun { display: flex; flex-direction: column; align-items: center; justify-content: center; flex-shrink: 0; width: 40px; height: 44px; border-radius: 10px; background: #e2f5ef; color: #009e83; }
+  .record-gun b { font-size: 18px; line-height: 1.1; }
+  .record-gun small { margin-top: 2px; font-size: 10px; }
+  .record-gun.lng { background: #eeeaff; color: #6250d6; }
+  .record-gun.pending { background: #fff7e6; color: #b75b00; }
+  .record-info { flex: 1; min-width: 0; }
+  .record-info b { display: block; font-size: 13px; font-weight: 600; }
+  .record-info span { display: block; margin-top: 5px; color: #8a94a6; font-size: 11px; }
+  .record-result { flex-shrink: 0; text-align: right; }
+  .record-result > b { display: block; margin-bottom: 5px; font-size: 14px; }
+  @media (max-width: 350px) {
+    .records-filter { gap: 6px; }
+    .records-filter .seg > button { padding: 0 12px; }
+    .record-info span { font-size: 10px; }
+  }
+</style>
+</head>
+<body data-shell="mobile" data-title="班次记录" data-tabbar="s" class="m-page records-page min-h-screen">
+<main class="px-4 pt-3 space-y-3">
+  <div class="records-filter"><div class="seg" id="dateFilter"><button class="on" data-range="today">今日</button><button data-range="history">历史</button></div><label class="records-date"><input id="recordDate" type="date" aria-label="选择日期"></label></div>
+  <section class="records-overview">
+    <div class="records-station"><i class="fa-solid fa-gas-pump" aria-hidden="true"></i>高新区油气合建站</div>
+    <p class="records-period"><span id="recordTitle">今日已核销</span> · 销售实收</p>
+    <div class="records-revenue" id="recordRevenue">¥0.00</div>
+    <div class="records-metrics">
+      <div><span>核销 / 笔</span><b id="recordCount">0</b></div>
+      <div><span>CNG / m³</span><b id="recordCng">0.00</b></div>
+      <div><span>LNG / kg</span><b id="recordLng">0.00</b></div>
+    </div>
+  </section>
+  <section class="card p-4" id="shiftSummary">
+    <div class="records-heading"><h2><i class="fa-solid fa-clock-rotate-left mr-2 text-brand-500" aria-hidden="true"></i>交班记录</h2><span class="tag-mute">点击查看详情</span></div>
+    <ul id="handoverList" class="divide-y divide-ink-100 mt-2"></ul>
+  </section>
+  <section class="card overflow-hidden">
+    <div class="records-heading px-4 pt-4 pb-2"><h2>核销记录</h2><span class="text-xs text-ink-500">仅本站 · 可查看详情</span></div>
+    <p id="demoNotice" class="px-4 pb-2 text-xs text-ink-500" hidden>该日期暂无核销记录，以下为演示数据，不计入统计。</p>
+    <ul id="redemptionList" class="divide-y divide-ink-100"></ul>
+  </section>
+  <p class="px-1 text-[11px] text-ink-500">按实际核销日期统计；CNG、LNG 气量分别汇总。旧版未留明细的汇总仅展示在交班记录中。</p>
+</main>
+<div class="sheet" id="recordDetailSheet" role="dialog" aria-modal="true" aria-labelledby="recordDetailTitle">
+  <div class="flex items-center justify-between px-4 h-12 border-b border-ink-100"><b id="recordDetailTitle">核销详情</b><button data-close aria-label="关闭"><i class="fa-solid fa-xmark text-ink-500"></i></button></div>
+  <dl id="recordDetail" class="p-4 pb-8 space-y-3 text-sm"></dl>
+</div>
+<script src="assets/js/common.js?v=h5-layout-2"></script>
+<script src="assets/js/gas-store.js?v=staff-flow-1"></script>
+<script>
+  const today = () => GasStore.dateKey(new Date());
+  $('#recordDate').value = today();
+  function demoOrders(selected) {
+    const [year, month, day] = selected.split('-').map(Number);
+    const startOfDay = new Date(year, month - 1, day).getTime();
+    const referenceTime = selected === today() ? Date.now() : new Date(year, month - 1, day, 14, 30).getTime();
+    return [
+      { id: 'DEMO000003', gun: '3', amount: 190, volume: 48.72, actualVolume: 48.50, minutesAgo: 8 },
+      { id: 'DEMO000002', gun: '5', amount: 300, volume: 60.24, actualVolume: 60.00, minutesAgo: 25 },
+      { id: 'DEMO000001', gun: '1', amount: 150, volume: 38.46, actualVolume: 38.20, minutesAgo: 45 }
+    ].map(example => {
+      const gun = GasStore.gunFor(example.gun);
+      return {
+        ...example, gas: gun.gas, unit: gun.unit, price: gun.price,
+        station: GasStore.station.name, driver: '138****6621',
+        paymentMethod: '微信支付 · 拉卡拉', completedBy: GasStore.staff,
+        completedAt: new Date(Math.max(startOfDay, referenceTime - example.minutesAgo * 60000)).toISOString(),
+        completedShiftId: '演示班次'
+      };
+    });
+  }
+  function detail(title, pairs) {
+    $('#recordDetailTitle').textContent = title;
+    $('#recordDetail').replaceChildren();
+    pairs.forEach(([label, value]) => {
+      const row = document.createElement('div');
+      row.className = 'flex justify-between gap-3';
+      const term = document.createElement('dt');
+      term.className = 'shrink-0 text-ink-500';
+      term.textContent = label;
+      const content = document.createElement('dd');
+      content.className = 'text-right font-medium';
+      content.textContent = value;
+      row.append(term, content);
+      $('#recordDetail').appendChild(row);
+    });
+    openLayer('#recordDetailSheet');
+  }
+  function emptyRow(list, text) {
+    const row = document.createElement('li');
+    row.className = 'py-5 text-center text-sm text-ink-500';
+    row.textContent = text;
+    list.appendChild(row);
+  }
+  function renderRecords() {
+    const selected = $('#recordDate').value;
+    if (!selected) return toast('请选择查询日期');
+    const data = GasStore.read();
+    const historyMode = selected !== today();
+    $$('#dateFilter button').forEach(button => button.classList.toggle('on', button.dataset.range === (historyMode ? 'history' : 'today')));
+    $('#recordTitle').textContent = historyMode ? selected + ' 已核销' : '今日已核销';
+    const orders = data.orders.filter(order => order.stationId === GasStore.station.id && order.status === 'completed' && order.completedAt && GasStore.dateKey(order.completedAt) === selected).reverse();
+    $('#recordRevenue').textContent = GasStore.money(orders.reduce((sum, order) => sum + order.amount, 0));
+    $('#recordCount').textContent = orders.length;
+    const volumeFor = gas => orders.filter(order => order.gas === gas).reduce((sum, order) => sum + order.actualVolume, 0).toFixed(2);
+    $('#recordCng').textContent = volumeFor('CNG');
+    $('#recordLng').textContent = volumeFor('LNG');
+    const list = $('#redemptionList');
+    list.replaceChildren();
+    const showingDemo = selected <= today() && !orders.length;
+    $('#demoNotice').hidden = !showingDemo;
+    const displayOrders = showingDemo ? demoOrders(selected) : orders;
+    if (!displayOrders.length) emptyRow(list, '该日期暂无核销记录');
+    displayOrders.forEach(order => {
+      const item = document.createElement('li');
+      const button = document.createElement('button');
+      button.className = 'record-row w-full text-left hover:bg-page';
+      const gun = document.createElement('span');
+      gun.className = 'record-gun' + (order.gas === 'LNG' ? ' lng' : '');
+      const gunNumber = document.createElement('b');
+      gunNumber.textContent = order.gun;
+      const gunLabel = document.createElement('small');
+      gunLabel.textContent = '号枪';
+      gun.append(gunNumber, gunLabel);
+      const info = document.createElement('span');
+      info.className = 'record-info';
+      const volume = document.createElement('b');
+      volume.textContent = `${order.gas} · ${Number(order.actualVolume).toFixed(2)} ${order.unit}`;
+      const meta = document.createElement('span');
+      meta.textContent = `尾号 ${order.id.slice(-6)} · ${new Date(order.completedAt).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })} · ${order.completedBy}`;
+      info.append(volume, meta);
+      const result = document.createElement('span');
+      result.className = 'record-result';
+      const amount = document.createElement('b');
+      amount.textContent = GasStore.money(order.amount);
+      const status = document.createElement('span');
+      status.className = 'tag-ok';
+      status.textContent = showingDemo ? '详情 ›' : '已核销 ›';
+      result.append(amount, status);
+      button.append(gun, info, result);
+      button.addEventListener('click', () => detail(showingDemo ? '核销详情（演示）' : '核销详情', [
+        ['订单编号', order.id], ['站点', order.station], ['司机会员', order.driver],
+        ['枪号 / 气种', `${order.gun} 号枪 · ${order.gas}`],
+        ['销售单价', `${GasStore.money(order.price)} / ${order.unit}`],
+        ['订单金额', GasStore.money(order.amount)], ['预计气量', `${Number(order.volume).toFixed(2)} ${order.unit}`],
+        ['实际气量', `${Number(order.actualVolume).toFixed(2)} ${order.unit}`],
+        ['支付方式', order.paymentMethod], ['核销人', order.completedBy],
+        ['核销时间', GasStore.time(order.completedAt)], ['所属班次', order.completedShiftId]
+      ]));
+      item.appendChild(button);
+      list.appendChild(item);
+    });
+    const shifts = data.shifts.filter(shift => shift.stationId === GasStore.station.id && shift.endedAt && GasStore.dateKey(shift.endedAt) === selected).reverse();
+    $('#handoverList').replaceChildren();
+    if (!shifts.length) emptyRow($('#handoverList'), '该日期暂无交班记录');
+    shifts.forEach(shift => {
+      const totals = GasStore.totalsFor(data, shift.id);
+      const row = document.createElement('li');
+      const button = document.createElement('button');
+      button.className = 'w-full py-3 text-left';
+      const label = document.createElement('p');
+      label.className = 'text-sm font-semibold';
+      label.textContent = `${shift.staff} · ${GasStore.time(shift.endedAt)} ›`;
+      const total = document.createElement('p');
+      total.className = 'mt-1 text-xs text-ink-500';
+      total.textContent = `${totals.orders} 笔 · ${GasStore.money(totals.amount)}${totals.legacy ? ' · 含旧版汇总' : ''}`;
+      button.append(label, total);
+      button.addEventListener('click', () => detail('交班详情', [
+        ['加气员', shift.staff], ['开班时间', GasStore.time(shift.startedAt)], ['交班时间', GasStore.time(shift.endedAt)],
+        ['完成订单', totals.orders + ' 笔'], ['实收金额', GasStore.money(totals.amount)],
+        ['CNG 实际气量', totals.cng.toFixed(2) + ' m³'], ['LNG 实际气量', totals.lng.toFixed(2) + ' kg'],
+        ['说明', totals.legacy ? '含旧版笔数和金额，旧版未登记实际气量' : '按本班实际核销记录汇总']
+      ]));
+      row.appendChild(button);
+      $('#handoverList').appendChild(row);
+    });
+  }
+  $('#dateFilter').addEventListener('click', e => {
+    const button = e.target.closest('button[data-range]');
+    if (!button) return;
+    if (button.dataset.range === 'today') $('#recordDate').value = today();
+    else if (!$('#recordDate').value || $('#recordDate').value === today()) {
+      const yesterday = new Date();
+      yesterday.setDate(yesterday.getDate() - 1);
+      $('#recordDate').value = GasStore.dateKey(yesterday);
+    }
+    GasStore.run(renderRecords);
+  });
+  $('#recordDate').addEventListener('change', () => GasStore.run(renderRecords));
+  window.addEventListener('storage', e => { if (e.key === GasStore.key || e.key === null) GasStore.run(renderRecords); });
+  window.addEventListener('pageshow', () => GasStore.run(renderRecords));
+  GasStore.run(renderRecords);
+</script>
+</body>
+</html>

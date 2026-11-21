@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>扫码操作 · 加气员</title>
+<link rel="stylesheet" href="assets/tailwind.css?v=h5-layout-2">
+<link rel="stylesheet" href="assets/vendor/fontawesome/css/all.min.css">
+<style>
+  .scan-page [hidden] { display: none !important; }
+  #scanMode { display: flex; padding: 4px; border-radius: 12px; }
+  #scanMode > button { height: 36px; border-radius: 9px; font-size: 13px; }
+  #scanMode > button.on { background: #2a78d6; color: #fff; }
+  .scan-entry { display: flex; align-items: center; gap: 12px; padding: 12px; border-radius: 12px; background: #f4f6f9; }
+  .scan-entry-icon { display: grid; place-items: center; flex-shrink: 0; width: 44px; height: 44px; border-radius: 12px; background: #fff; color: #2a78d6; font-size: 24px; }
+  .scan-entry p { margin-top: 3px; font-size: 11px; color: #8a94a6; }
+  .scan-order-card { border: 1px solid #cfe0f8; border-radius: 14px; overflow: hidden; }
+  .scan-order-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 12px 14px; background: #edf5ff; font-size: 13px; font-weight: 600; color: #215fa9; }
+  .scan-order-body { padding: 14px; }
+  .scan-order-station { font-size: 15px; font-weight: 600; }
+  .scan-order-values { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 14px; }
+  .scan-order-values > div { min-width: 0; padding: 12px; border-radius: 10px; background: #f4f6f9; }
+  .scan-order-values span { display: block; color: #8a94a6; font-size: 11px; }
+  .scan-order-values b { display: block; margin-top: 4px; font-size: 24px; line-height: 1.3; }
+  #scanOrderAmount { color: #eb6834; }
+  .scan-order-meta { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 12px; color: #8a94a6; font-size: 12px; }
+  .scan-order-meta b { color: #475467; font-size: 12px; font-weight: 500; text-align: right; }
+  .scan-order-notice { padding: 14px; border-radius: 12px; background: #f4f6f9; color: #475467; font-size: 13px; }
+  .camera-view { position: relative; height: 260px; height: min(34vh, 300px); overflow: hidden; border-radius: 16px; background: #111c2e; }
+  .camera-view video { width: 100%; height: 100%; object-fit: cover; }
+  .camera-frame { position: absolute; inset: 20px; margin: auto; width: 180px; max-width: 80%; height: 180px; max-height: 85%; border: 2px solid #6ee7b7; border-radius: 16px; box-shadow: 0 0 0 200px #0005; overflow: hidden; }
+  .camera-frame::after { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: #6ee7b7; box-shadow: 0 0 14px #6ee7b7; animation: camera-sweep 1.5s ease-in-out infinite alternate; }
+  .camera-placeholder { position: absolute; inset: 0; display: grid; place-items: center; color: #ffffff60; font-size: 52px; }
+  @keyframes camera-sweep { to { top: calc(100% - 2px); } }
+  @media (prefers-reduced-motion: reduce) { .camera-frame::after { animation: none; top: 50%; } }
+</style>
+</head>
+<body data-shell="mobile" data-title="扫码操作" data-tabbar="s" class="m-page scan-page min-h-screen">
+<main class="px-4 pt-3 space-y-3">
+  <section class="card p-3 flex items-center justify-between">
+    <div><div class="text-xs text-ink-500">当前班次</div><b id="shiftState">未开始</b></div>
+    <a href="s-workbench.html" id="shiftLink" class="btn-ghost btn-sm">去工作台开班</a>
+  </section>
+  <div id="offDutyNotice" class="rounded-xl bg-amber-50 text-amber-800 text-sm p-3"><i class="fa-solid fa-lock mr-1"></i>请先开始当班；非当班状态不能核销或代下单。</div>
+  <div class="seg w-full" id="scanMode">
+    <button class="on flex-1" data-mode="redeem">订单核销</button>
+    <button class="flex-1" data-mode="proxy">会员码代下单</button>
+  </div>
+  <section class="card p-4 space-y-3" data-scan="redeem">
+    <div><h2 class="font-semibold">扫码核销</h2><p class="text-xs text-ink-500 mt-1">扫描司机动态码，核对订单后确认完成</p></div>
+    <div class="scan-entry">
+      <span class="scan-entry-icon"><i class="fa-solid fa-qrcode" aria-hidden="true"></i></span>
+      <div class="min-w-0 flex-1"><b class="text-sm">司机订单动态码</b><p>扫描任意物体即可演示识别</p></div>
+      <button id="simulateOrderScan" class="btn-primary btn-sm"><i class="fa-solid fa-camera" aria-hidden="true"></i>扫一扫</button>
+    </div>
+    <label class="block"><span class="label">演示扫描对象</span><select id="scanOrderChoice" class="field"><option value="">自动选择最近待核销订单</option></select></label>
+    <label class="block"><span class="label">订单编号</span><input id="orderCode" class="field font-mono" placeholder="扫码后自动填入，也可手动输入"></label>
+    <div id="orderInfo" class="scan-order-notice" role="status">请扫码读取已支付订单</div>
+    <div id="scanOrderDetails" class="scan-order-card" hidden>
+      <div class="scan-order-top"><span><i class="fa-solid fa-circle-check mr-1" aria-hidden="true"></i>已识别订单</span><span id="scanOrderStatus" class="tag-ok">已支付 · 待核销</span></div>
+      <div class="scan-order-body">
+        <h3 id="scanOrderStation" class="scan-order-station">高新区油气合建站</h3>
+        <div class="scan-order-values">
+          <div><span>加气枪号</span><b id="scanOrderGun">3 号枪</b></div>
+          <div><span>订单金额</span><b id="scanOrderAmount">¥190.00</b></div>
+        </div>
+        <div class="scan-order-meta"><span>气种 / 预计气量</span><b id="scanOrderVolume">CNG · 51.28 m³</b></div>
+        <div class="scan-order-meta"><span>支付信息</span><b id="scanOrderPayment">微信支付 · 拉卡拉</b></div>
+      </div>
+    </div>
+    <button id="redeemOrder" class="btn-primary btn-lg w-full" disabled><i class="fa-solid fa-check mr-1"></i>确认完成加气</button>
+  </section>
+
+  <section class="card p-4 space-y-3" data-scan="proxy" hidden>
+    <div><h2 class="font-semibold">会员码代下单</h2><p class="text-xs text-ink-500 mt-1">扫码识别司机会员后，录入枪号和金额；司机确认并支付后才能加气。</p></div>
+    <div class="rounded-lg bg-page p-3 flex items-center gap-3">
+      <div class="w-11 h-11 rounded-lg bg-white text-brand-500 grid place-items-center text-xl"><i class="fa-solid fa-qrcode"></i></div>
+      <div class="flex-1"><b id="memberIdentity">待识别司机会员</b><div class="text-xs text-ink-500 mt-0.5" id="memberScanState">请先扫描司机会员码</div></div>
+      <button class="text-xs text-brand-600" id="simulateMemberScan">扫一扫</button>
+    </div>
+    <div class="grid grid-cols-2 gap-3">
+      <label><span class="label">加气枪号</span><select id="gun" class="field h-11"><option value="3">3 号枪 · CNG</option><option value="1">1 号枪 · CNG</option><option value="2">2 号枪 · CNG</option><option value="4">4 号枪 · CNG</option><option value="5">5 号枪 · LNG</option><option value="6">6 号枪 · LNG</option></select></label>
+      <label><span class="label">订单金额（元）</span><input id="amount" class="field h-11" type="number" min="0.01" step="0.01" value="200" inputmode="decimal"></label>
+    </div>
+    <label class="block"><span class="label">销售单价（元 / <span id="proxyPriceUnit">m³</span>）· 按枪号自动带出</span><input id="unitPrice" class="field h-11 bg-page" type="number" value="3.90" readonly></label>
+    <div class="rounded-lg bg-brand-50 text-brand-800 px-3 py-2 text-xs">预估气量 <b id="estimatedVolume">51.28 m³</b> · 司机确认支付后订单才生效</div>
+    <button id="createProxyOrder" class="btn-primary btn-lg w-full"><i class="fa-solid fa-paper-plane mr-1"></i>发送订单给司机支付</button>
+  </section>
+  <p class="text-center text-[11px] text-ink-500 px-2">扫码、支付和核销均为原型模拟；按实际气量保存核销记录，不产生真实交易或库存扣减。</p>
+</main>
+<div class="sheet" id="cameraSheet" role="dialog" aria-modal="true" aria-labelledby="cameraTitle">
+  <div class="flex items-center justify-between px-4 h-12 border-b border-ink-100">
+    <b id="cameraTitle">扫描订单动态码</b>
+    <button data-close aria-label="关闭扫描"><i class="fa-solid fa-xmark text-ink-500"></i></button>
+  </div>
+  <div class="p-4 pb-8 space-y-3">
+    <div class="camera-view">
+      <span class="camera-placeholder"><i class="fa-solid fa-qrcode" aria-hidden="true"></i></span>
+      <video id="cameraVideo" autoplay muted playsinline hidden></video>
+      <div class="camera-frame" aria-hidden="true"></div>
+    </div>
+    <p id="cameraStatus" class="text-center text-sm text-ink-700" role="status">正在打开摄像头…</p>
+    <p class="text-center text-xs text-ink-500">仅演示扫描效果，不校验二维码；画面不上传、不保存。</p>
+    <button id="demoScan" class="btn-primary btn-lg w-full">使用演示识别</button>
+  </div>
+</div>
+<div class="sheet" id="redeemConfirmSheet" role="dialog" aria-modal="true" aria-labelledby="redeemConfirmTitle">
+  <div class="flex items-center justify-between px-4 h-12 border-b border-ink-100">
+    <b id="redeemConfirmTitle">确认完成加气</b>
+    <button data-close aria-label="关闭"><i class="fa-solid fa-xmark text-ink-500"></i></button>
+  </div>
+  <div class="p-4 pb-8 space-y-3">
+    <p class="text-sm text-ink-500">请确认已完成加气，核销后订单动态码将失效。</p>
+    <div class="rounded-xl bg-page p-4 space-y-3 text-sm">
+      <b id="redeemConfirmStation" class="block"></b>
+      <div class="flex justify-between gap-3"><span class="text-ink-500">订单编号</span><b id="redeemConfirmCode"></b></div>
+      <div class="flex justify-between gap-3"><span class="text-ink-500">加气枪号</span><b id="redeemConfirmGun"></b></div>
+      <div class="flex justify-between gap-3"><span class="text-ink-500">气种 / 预计气量</span><b id="redeemConfirmVolume"></b></div>
+      <div class="flex items-center justify-between gap-3 border-t border-ink-100 pt-3"><span class="text-ink-500">订单金额</span><b id="redeemConfirmAmount" class="text-xl text-money"></b></div>
+    </div>
+    <label class="block"><span class="label">加气机实际气量（<span id="actualVolumeUnit">m³</span>）</span><input id="actualVolume" class="field h-11 text-lg font-semibold" type="number" min="0.01" step="0.01" inputmode="decimal" placeholder="请按加气机读数录入"></label>
+    <p id="actualVolumeHint" class="text-xs text-ink-500" role="status">请填写实际气量，不会自动使用预计气量。</p>
+    <div class="grid grid-cols-2 gap-3 pt-1">
+      <button class="btn-ghost btn-lg" data-close>返回核对</button>
+      <button id="confirmRedeemOrder" class="btn-primary btn-lg">确认核销</button>
+    </div>
+  </div>
+</div>
+<div class="sheet" id="sendOrderSheet" role="dialog" aria-modal="true" aria-labelledby="sendOrderTitle">
+  <div class="flex items-center justify-between px-4 h-12 border-b border-ink-100">
+    <b id="sendOrderTitle">确认发送订单</b>
+    <button data-close aria-label="关闭"><i class="fa-solid fa-xmark text-ink-500"></i></button>
+  </div>
+  <div class="p-4 pb-8 space-y-3">
+    <p class="text-sm text-ink-500">请核对以下信息，发送后由司机确认并支付。</p>
+    <div class="rounded-xl bg-page p-4 space-y-3 text-sm">
+      <div class="flex justify-between gap-3"><span class="text-ink-500">司机会员</span><b>138****6621</b></div>
+      <div class="flex justify-between gap-3"><span class="text-ink-500">枪号 / 气种</span><b id="sendOrderGun"></b></div>
+      <div class="flex justify-between gap-3"><span class="text-ink-500">预计气量</span><b id="sendOrderVolume"></b></div>
+      <div class="flex items-center justify-between gap-3 border-t border-ink-100 pt-3"><span class="text-ink-500">待支付金额</span><b id="sendOrderAmount" class="text-xl text-money"></b></div>
+    </div>
+    <div class="grid grid-cols-2 gap-3 pt-1">
+      <button class="btn-ghost btn-lg" data-close>返回修改</button>
+      <button id="confirmSendOrder" class="btn-primary btn-lg">确认发送</button>
+    </div>
+  </div>
+</div>
+<script src="assets/js/common.js?v=h5-layout-2"></script>
+<script src="assets/js/gas-store.js?v=staff-flow-1"></script>
+<script>
+  const stateEl = $('#shiftState'), offDutyNotice = $('#offDutyNotice');
+  const isOnDuty = () => Boolean(GasStore.activeShift(GasStore.read()));
+  let proxyDraft = null;
+  let redeemCode = null;
+  let redeemShiftId = null;
+  let memberScanned = false;
+  let scanTarget = null;
+  let cameraStream = null;
+  let scanTimer = null;
+  let scanSession = 0;
+  function stopScan() {
+    scanSession += 1;
+    clearTimeout(scanTimer);
+    if (cameraStream) cameraStream.getTracks().forEach(track => track.stop());
+    cameraStream = null;
+    $('#cameraVideo').srcObject = null;
+    $('#cameraVideo').hidden = true;
+    scanTarget = null;
+  }
+  function finishScan() {
+    if (!isOnDuty()) {
+      stopScan();
+      closeLayers();
+      return toast('已交班，请重新开始当班');
+    }
+    const target = scanTarget;
+    if (!target) return;
+    stopScan();
+    closeLayers();
+    if (target === 'proxy') {
+      memberScanned = true;
+      $('#memberIdentity').textContent = '司机会员 138****6621';
+      $('#memberScanState').textContent = '会员码已识别 · 模拟数据';
+      $('#memberScanState').className = 'text-xs text-ok mt-0.5';
+      $('#simulateMemberScan').textContent = '重新扫码';
+      toast('扫描完成，已识别模拟司机会员');
+    } else {
+      const orders = GasStore.read().orders.slice().reverse();
+      const selectedId = $('#scanOrderChoice').value;
+      const order = selectedId ? GasStore.getOrder({ orders }, selectedId) :
+        orders.find(item => item.status === 'paid' && item.stationId === GasStore.station.id) || orders[0] || GasStore.demoOrder();
+      $('#orderCode').value = order.id;
+      findOrder();
+      toast('扫描完成，已读取模拟订单');
+    }
+  }
+  async function startScan(target) {
+    const active = GasStore.run(isOnDuty);
+    if (active === null) return;
+    if (!active) return toast('请先开始当班');
+    stopScan();
+    scanTarget = target;
+    const session = scanSession;
+    $('#cameraTitle').textContent = target === 'proxy' ? '扫描司机会员码' : '扫描订单动态码';
+    $('#cameraStatus').textContent = '正在打开摄像头…';
+    $('#demoScan').disabled = false;
+    openLayer('#cameraSheet');
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      $('#cameraStatus').textContent = '当前环境无法使用摄像头，请使用演示识别';
+      return;
+    }
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false });
+      if (session !== scanSession) {
+        stream.getTracks().forEach(track => track.stop());
+        return;
+      }
+      cameraStream = stream;
+      const video = $('#cameraVideo');
+      video.srcObject = stream;
+      video.hidden = false;
+      await video.play();
+      if (session !== scanSession) return;
+      $('#cameraStatus').textContent = '请对准任意物体，正在模拟识别…';
+      scanTimer = setTimeout(() => GasStore.run(finishScan), 2000);
+    } catch (error) {
+      if (session !== scanSession) return;
+      console.warn('无法启动扫码摄像头', error);
+      stopScan();
+      scanTarget = target;
+      $('#cameraStatus').textContent = '摄像头未开启，请检查权限或使用演示识别';
+    }
+  }
+  $('#demoScan').addEventListener('click', () => {
+    if (!scanTarget) return;
+    const target = scanTarget;
+    stopScan();
+    scanTarget = target;
+    $('#demoScan').disabled = true;
+    $('#cameraStatus').textContent = '正在模拟识别…';
+    scanTimer = setTimeout(() => GasStore.run(finishScan), 800);
+  });
+  document.addEventListener('click', event => {
+    if (($('#cameraSheet').contains(event.target) && event.target.closest('[data-close]')) || event.target.classList.contains('sheet-mask')) stopScan();
+  });
+  document.addEventListener('keydown', event => { if (event.key === 'Escape') stopScan(); });
+  window.addEventListener('pagehide', stopScan);
+  function updateDuty() {
+    const active = isOnDuty();
+    if (!active && scanTarget) {
+      stopScan();
+      closeLayers();
+    }
+    stateEl.textContent = active ? '当班中 · 李师傅' : '未开始';
+    stateEl.className = active ? 'font-semibold text-ok' : 'font-semibold text-amber-700';
+    offDutyNotice.hidden = active;
+    $('#shiftLink').textContent = active ? '返回工作台' : '去工作台开班';
+    $$('[data-scan] button, [data-scan] input, [data-scan] select').forEach(el => { el.disabled = !active; });
+    const selected = $('#scanOrderChoice').value;
+    const options = [new Option('自动选择最近待核销订单', '')];
+    const labels = { waiting_driver: '待支付', paid: '待核销', completed: '已核销', rejected: '已拒绝', refunded: '已退款', closed: '已关闭' };
+    GasStore.read().orders.slice().reverse().forEach(order => {
+      options.push(new Option(`${order.gun} 号枪 · ${GasStore.money(order.amount)} · ${labels[order.status] || order.status} · ${order.id.slice(-6)}`, order.id));
+    });
+    $('#scanOrderChoice').replaceChildren(...options);
+    $('#scanOrderChoice').value = selected;
+    findOrder();
+  }
+  GasStore.run(updateDuty);
+  window.addEventListener('storage', e => { if (e.key === GasStore.key || e.key === null) GasStore.run(updateDuty); });
+  window.addEventListener('pageshow', () => GasStore.run(updateDuty));
+  function setScanMode(mode) {
+    $$('#scanMode button').forEach(button => button.classList.toggle('on', button.dataset.mode === mode));
+    $$('[data-scan]').forEach(section => { section.hidden = section.dataset.scan !== mode; });
+  }
+  const initialMode = new URLSearchParams(location.search).get('mode');
+  setScanMode(initialMode === 'proxy' ? 'proxy' : 'redeem');
+  $('#scanMode').addEventListener('click', e => {
+    const button = e.target.closest('button[data-mode]');
+    if (!button) return;
+    setScanMode(button.dataset.mode);
+  });
+  function findOrder() {
+    const code = $('#orderCode').value.trim();
+    const info = $('#orderInfo'), button = $('#redeemOrder');
+    const details = $('#scanOrderDetails');
+    details.hidden = true;
+    info.hidden = false;
+    button.disabled = true;
+    if (!code) { info.textContent = '请扫码读取已支付订单'; return; }
+    const data = GasStore.read();
+    const order = data.orders.find(item => item.id === code);
+    if (!order) { info.textContent = '未找到该订单，请重新扫码或核对订单编号'; return; }
+    try { GasStore.checkRedeem(order); }
+    catch (error) { info.textContent = error.message; return; }
+    showOrder(order);
+  }
+  function showOrder(order) {
+    $('#orderInfo').hidden = true;
+    $('#scanOrderDetails').hidden = false;
+    $('#scanOrderStation').textContent = order.station;
+    $('#scanOrderGun').textContent = `${order.gun} 号枪`;
+    $('#scanOrderAmount').textContent = '¥' + Number(order.amount).toFixed(2);
+    $('#scanOrderVolume').textContent = `${order.gas} · ${Number(order.volume).toFixed(2)} ${order.unit}`;
+    $('#scanOrderPayment').textContent = order.paymentMethod || '司机已确认支付';
+    $('#scanOrderStatus').textContent = '已支付 · 待核销';
+    $('#redeemOrder').disabled = !isOnDuty();
+  }
+  $('#orderCode').addEventListener('input', () => GasStore.run(findOrder));
+  $('#simulateOrderScan').addEventListener('click', () => startScan('redeem'));
+  $('#redeemOrder').addEventListener('click', () => GasStore.run(() => {
+    if (!isOnDuty()) return toast('请先开始当班');
+    findOrder();
+    if ($('#redeemOrder').disabled) return toast('请先识别有效的已支付待核销订单');
+    redeemCode = $('#orderCode').value.trim();
+    const data = GasStore.read(), order = GasStore.getOrder(data, redeemCode);
+    redeemShiftId = GasStore.activeShift(data).id;
+    $('#redeemConfirmCode').textContent = redeemCode;
+    $('#redeemConfirmStation').textContent = $('#scanOrderStation').textContent;
+    $('#redeemConfirmGun').textContent = $('#scanOrderGun').textContent;
+    $('#redeemConfirmVolume').textContent = $('#scanOrderVolume').textContent;
+    $('#redeemConfirmAmount').textContent = $('#scanOrderAmount').textContent;
+    $('#actualVolume').value = '';
+    $('#actualVolumeUnit').textContent = order.unit;
+    $('#actualVolumeHint').textContent = '请填写实际气量，不会自动使用预计气量。';
+    $('#confirmRedeemOrder').disabled = false;
+    openLayer('#redeemConfirmSheet');
+  }));
+  $('#actualVolume').addEventListener('input', () => GasStore.run(() => {
+    const order = GasStore.getOrder(GasStore.read(), redeemCode);
+    const volume = Number($('#actualVolume').value);
+    $('#actualVolumeHint').textContent = volume > 0 && Number.isFinite(volume) ?
+      `实际 ${volume.toFixed(2)} ${order.unit}，与预计相差 ${(volume - order.volume).toFixed(2)} ${order.unit}` :
+      '请输入大于 0 的有效实际气量';
+  }));
+  $('#confirmRedeemOrder').addEventListener('click', () => GasStore.run(() => {
+    if (!isOnDuty()) return toast('已交班，不能核销订单');
+    if (!redeemCode || redeemCode !== $('#orderCode').value.trim()) return toast('订单已变更，请返回重新核对');
+    const order = GasStore.redeem(redeemCode, Number($('#actualVolume').value), redeemShiftId);
+    redeemCode = null;
+    closeLayers();
+    toast('核销成功，订单已完成');
+    $('#scanOrderStatus').textContent = '已完成 · 已核销';
+    $('#orderInfo').hidden = false;
+    $('#orderInfo').textContent = `核销完成 · 实际气量 ${order.actualVolume.toFixed(2)} ${order.unit} · ${order.completedBy}，动态码已失效`;
+    $('#redeemOrder').disabled = true;
+    $('#confirmRedeemOrder').disabled = true;
+  }));
+  $('#simulateMemberScan').addEventListener('click', () => startScan('proxy'));
+  function updateEstimate() {
+    const gun = GasStore.gunFor($('#gun').value), amount = Number($('#amount').value);
+    $('#unitPrice').value = gun.price.toFixed(2);
+    $('#proxyPriceUnit').textContent = gun.unit;
+    $('#estimatedVolume').textContent = amount > 0 && Number.isFinite(amount) ? `${(amount / gun.price).toFixed(2)} ${gun.unit}` : '—';
+  }
+  ['amount', 'gun'].forEach(id => $('#' + id).addEventListener('input', () => GasStore.run(updateEstimate)));
+  $('#gun').addEventListener('change', () => GasStore.run(updateEstimate));
+  $('#createProxyOrder').addEventListener('click', () => GasStore.run(() => {
+    if (!isOnDuty()) return toast('请先开始当班');
+    if (!memberScanned) return toast('请先扫描司机会员码');
+    const selectedGun = GasStore.gunFor($('#gun').value);
+    const amount = Number($('#amount').value), price = selectedGun.price;
+    if (!Number.isFinite(amount) || !Number.isFinite(price) || !(amount > 0) || !(price > 0)) return toast('请输入有效的订单金额和单价');
+    const gun = selectedGun.no;
+    const order = {
+      gun,
+      gas: selectedGun.gas,
+      unit: selectedGun.unit,
+      amount,
+      volume: amount / price
+    };
+    proxyDraft = { ...order, shiftId: GasStore.activeShift(GasStore.read()).id };
+    $('#confirmSendOrder').disabled = false;
+    $('#sendOrderGun').textContent = `${order.gun} 号枪 · ${order.gas}`;
+    $('#sendOrderVolume').textContent = `${order.volume.toFixed(2)} ${order.unit}`;
+    $('#sendOrderAmount').textContent = '¥' + order.amount.toFixed(2);
+    openLayer('#sendOrderSheet');
+  }));
+  $('#confirmSendOrder').addEventListener('click', () => GasStore.run(() => {
+    if (!isOnDuty()) return toast('已交班，不能发送订单');
+    if (!proxyDraft) return toast('请先填写并核对订单信息');
+    if (GasStore.activeShift(GasStore.read()).id !== proxyDraft.shiftId) return toast('班次已变更，请重新核对订单');
+    const order = GasStore.createProxy(proxyDraft);
+    proxyDraft = null;
+    $('#confirmSendOrder').disabled = true;
+    location.href = 's-workbench.html?sent=' + encodeURIComponent(order.id);
+  }));
+  GasStore.run(findOrder);
+  GasStore.run(updateEstimate);
+</script>
+</body>
+</html>

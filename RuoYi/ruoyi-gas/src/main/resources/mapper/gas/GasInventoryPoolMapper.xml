@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.gas.mapper.GasInventoryPoolMapper">
+
+	<resultMap type="GasInventoryPool" id="GasInventoryPoolResult">
+		<id     property="poolId"         column="pool_id"         />
+		<result property="stationId"      column="station_id"      />
+		<result property="buyerId"        column="buyer_id"        />
+		<result property="gasType"        column="gas_type"        />
+		<result property="totalIn"        column="total_in"        />
+		<result property="reserved"       column="reserved"        />
+		<result property="consumed"       column="consumed"        />
+		<result property="adjusted"       column="adjusted"        />
+		<result property="alertThreshold" column="alert_threshold" />
+		<result property="alertArmed"     column="alert_armed"     />
+		<result property="updateTime"     column="update_time"     />
+		<result property="stationCode"    column="station_code"    />
+		<result property="stationName"    column="station_name"    />
+		<result property="buyerName"      column="buyer_name"      />
+		<result property="available"      column="available"       />
+	</resultMap>
+
+	<sql id="selectPoolVo">
+        select p.pool_id, p.station_id, p.buyer_id, p.gas_type, p.total_in, p.reserved, p.consumed, p.adjusted,
+               p.alert_threshold, p.alert_armed, p.update_time,
+               s.station_code, s.station_name, bu.buyer_name,
+               (p.total_in + p.adjusted - p.consumed - p.reserved) as available
+        from gas_inventory_pool p
+        left join gas_station s on p.station_id = s.station_id
+        left join gas_buyer bu on p.buyer_id = bu.buyer_id
+    </sql>
+
+	<select id="selectPoolList" parameterType="GasInventoryPool" resultMap="GasInventoryPoolResult">
+		<include refid="selectPoolVo"/>
+		<where>
+			<if test="stationId != null and stationId != 0">
+				AND p.station_id = #{stationId}
+			</if>
+			<if test="buyerId != null and buyerId != 0">
+				AND p.buyer_id = #{buyerId}
+			</if>
+			<if test="gasType != null and gasType != ''">
+				AND p.gas_type = #{gasType}
+			</if>
+		</where>
+		order by p.station_id, p.gas_type
+	</select>
+
+	<select id="selectPoolById" parameterType="Long" resultMap="GasInventoryPoolResult">
+		<include refid="selectPoolVo"/>
+		where p.pool_id = #{poolId}
+	</select>
+
+	<!-- 悲观锁：同站同气种串行化 -->
+	<select id="selectPoolForUpdate" resultMap="GasInventoryPoolResult">
+		select p.pool_id, p.station_id, p.buyer_id, p.gas_type, p.total_in, p.reserved, p.consumed, p.adjusted,
+		       p.alert_threshold, p.alert_armed
+		from gas_inventory_pool p
+		where p.station_id = #{stationId} and p.gas_type = #{gasType}
+		for update
+	</select>
+
+	<select id="selectPoolByIdForUpdate" parameterType="Long" resultMap="GasInventoryPoolResult">
+		select p.pool_id, p.station_id, p.buyer_id, p.gas_type, p.total_in, p.reserved, p.consumed, p.adjusted,
+		       p.alert_threshold, p.alert_armed
+		from gas_inventory_pool p
+		where p.pool_id = #{poolId}
+		for update
+	</select>
+
+	<insert id="insertPool" parameterType="GasInventoryPool" useGeneratedKeys="true" keyProperty="poolId">
+		insert into gas_inventory_pool(
+			station_id, buyer_id, gas_type
+			<if test="alertThreshold != null">, alert_threshold</if>
+		)values(
+			#{stationId}, #{buyerId}, #{gasType}
+			<if test="alertThreshold != null">, #{alertThreshold}</if>
+		)
+	</insert>
+
+	<update id="addTotalIn">
+		update gas_inventory_pool set total_in = total_in + #{qty}, update_time = sysdate() where pool_id = #{poolId}
+	</update>
+
+	<update id="addReserved">
+		update gas_inventory_pool set reserved = reserved + #{qty}, update_time = sysdate() where pool_id = #{poolId}
+	</update>
+
+	<update id="addConsumed">
+		update gas_inventory_pool set consumed = consumed + #{qty}, update_time = sysdate() where pool_id = #{poolId}
+	</update>
+
+	<update id="addAdjusted">
+		update gas_inventory_pool set adjusted = adjusted + #{qty}, update_time = sysdate() where pool_id = #{poolId}
+	</update>
+
+	<update id="updateAlert">
+		update gas_inventory_pool set alert_threshold = #{alertThreshold}, alert_armed = 1, update_time = sysdate()
+		where pool_id = #{poolId}
+	</update>
+
+	<update id="updateAlertArmed">
+		update gas_inventory_pool set alert_armed = #{alertArmed}, update_time = sysdate() where pool_id = #{poolId}
+	</update>
+
+</mapper>

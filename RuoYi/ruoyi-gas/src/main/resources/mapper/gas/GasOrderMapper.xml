@@ -1,0 +1,190 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.gas.mapper.GasOrderMapper">
+
+	<resultMap type="GasOrder" id="GasOrderResult">
+		<id     property="orderId"        column="order_id"         />
+		<result property="orderNo"        column="order_no"         />
+		<result property="source"         column="source"           />
+		<result property="status"         column="status"           />
+		<result property="buyerId"        column="buyer_id"         />
+		<result property="stationId"      column="station_id"       />
+		<result property="gunId"          column="gun_id"           />
+		<result property="gunNo"          column="gun_no"           />
+		<result property="gasType"        column="gas_type"         />
+		<result property="memberId"       column="member_id"        />
+		<result property="requestId"      column="request_id"       />
+		<result property="unitPrice"      column="unit_price"       />
+		<result property="orderAmount"    column="order_amount"     />
+		<result property="discountAmount" column="discount_amount"  />
+		<result property="payAmount"      column="pay_amount"       />
+		<result property="refundedAmount" column="refunded_amount"  />
+		<result property="couponId"       column="coupon_id"        />
+		<result property="estVolume"      column="est_volume"       />
+		<result property="actualVolume"   column="actual_volume"    />
+		<result property="merchantId"     column="merchant_id"      />
+		<result property="payChannel"     column="pay_channel"      />
+		<result property="createdShiftId" column="created_shift_id" />
+		<result property="completedShiftId" column="completed_shift_id" />
+		<result property="proxyStaffId"   column="proxy_staff_id"   />
+		<result property="redeemStaffId"  column="redeem_staff_id"  />
+		<result property="expireAt"       column="expire_at"        />
+		<result property="paidAt"         column="paid_at"          />
+		<result property="completedAt"    column="completed_at"     />
+		<result property="closedAt"       column="closed_at"        />
+		<result property="closeReason"    column="close_reason"     />
+		<result property="exceptionNote"  column="exception_note"   />
+		<result property="createTime"     column="create_time"      />
+		<result property="updateTime"     column="update_time"      />
+		<result property="stationName"    column="station_name"     />
+		<result property="stationCode"    column="station_code"     />
+		<result property="memberPhone"    column="member_phone"     />
+	</resultMap>
+
+	<sql id="selectOrderVo">
+        select o.order_id, o.order_no, o.source, o.status, o.buyer_id, o.station_id, o.gun_id, o.gun_no,
+               o.gas_type, o.member_id, o.request_id, o.unit_price, o.order_amount, o.discount_amount, o.pay_amount,
+               o.refunded_amount, o.coupon_id, o.est_volume, o.actual_volume, o.merchant_id, o.pay_channel,
+               o.created_shift_id, o.completed_shift_id, o.proxy_staff_id, o.redeem_staff_id,
+               o.expire_at, o.paid_at, o.completed_at, o.closed_at, o.close_reason, o.exception_note,
+               o.create_time, o.update_time,
+               s.station_name, s.station_code, m.phone as member_phone
+        from gas_order o
+        left join gas_station s on o.station_id = s.station_id
+        left join gas_member m on o.member_id = m.member_id
+    </sql>
+
+	<select id="selectOrderById" parameterType="Long" resultMap="GasOrderResult">
+		<include refid="selectOrderVo"/>
+		where o.order_id = #{orderId}
+	</select>
+
+	<select id="selectOrderByIdForUpdate" parameterType="Long" resultMap="GasOrderResult">
+		select o.order_id, o.order_no, o.source, o.status, o.buyer_id, o.station_id, o.gun_id, o.gun_no,
+		       o.gas_type, o.member_id, o.request_id, o.unit_price, o.order_amount, o.discount_amount, o.pay_amount,
+		       o.refunded_amount, o.coupon_id, o.est_volume, o.actual_volume, o.merchant_id, o.pay_channel,
+		       o.created_shift_id, o.completed_shift_id, o.proxy_staff_id, o.redeem_staff_id,
+		       o.expire_at, o.paid_at, o.completed_at, o.closed_at, o.close_reason, o.exception_note,
+		       o.create_time, o.update_time
+		from gas_order o where o.order_id = #{orderId} for update
+	</select>
+
+	<select id="selectOrderByNo" parameterType="String" resultMap="GasOrderResult">
+		<include refid="selectOrderVo"/>
+		where o.order_no = #{orderNo}
+	</select>
+
+	<select id="selectOrderByNoForUpdate" parameterType="String" resultMap="GasOrderResult">
+		select o.order_id, o.order_no, o.source, o.status, o.buyer_id, o.station_id, o.gun_id, o.gun_no,
+		       o.gas_type, o.member_id, o.request_id, o.unit_price, o.order_amount, o.discount_amount, o.pay_amount,
+		       o.refunded_amount, o.coupon_id, o.est_volume, o.actual_volume, o.merchant_id, o.pay_channel,
+		       o.created_shift_id, o.completed_shift_id, o.proxy_staff_id, o.redeem_staff_id,
+		       o.expire_at, o.paid_at, o.completed_at, o.closed_at, o.close_reason, o.exception_note,
+		       o.create_time, o.update_time
+		from gas_order o
+		where o.order_no = #{orderNo}
+		for update
+	</select>
+
+	<select id="selectOrderByRequestIdForUpdate" resultMap="GasOrderResult">
+		<include refid="selectOrderVo"/>
+		where o.member_id=#{memberId} and o.request_id=#{requestId} for update
+	</select>
+
+	<select id="selectMemberOrders" resultMap="GasOrderResult">
+		<include refid="selectOrderVo"/>
+		where o.member_id = #{memberId}
+		order by o.order_id desc
+		limit #{offset}, #{limit}
+	</select>
+
+	<select id="countMemberOrders" parameterType="Long" resultType="int">
+		select count(1) from gas_order where member_id = #{memberId}
+	</select>
+
+	<!-- 关单：条件更新防并发（支付回调可能抢先），写 closed_at/close_reason -->
+	<update id="closeOrder">
+		update gas_order
+		set status = 'CLOSED', closed_at = sysdate(), close_reason = #{closeReason}, update_time = sysdate()
+		where order_id = #{orderId} and status = 'WAIT_PAY'
+	</update>
+
+	<update id="markPaid">
+		update gas_order
+		set status = 'PAID', merchant_id = #{merchantId}, pay_channel = #{payChannel},
+		    paid_at = sysdate(), update_time = sysdate()
+		where order_id = #{orderId} and status = 'WAIT_PAY'
+	</update>
+
+	<update id="confirmProxyOrder">
+		update gas_order set status = 'WAIT_PAY', expire_at = #{expireAt}, update_time = sysdate()
+		where order_id = #{orderId} and status = 'WAIT_CONFIRM'
+	</update>
+
+	<update id="updateOrderCoupon" parameterType="GasOrder">
+		update gas_order set coupon_id=#{couponId},discount_amount=#{discountAmount},pay_amount=#{payAmount},update_time=sysdate()
+		where order_id=#{orderId} and status='WAIT_CONFIRM' and coupon_id is null
+	</update>
+
+	<update id="closeWaitConfirm">
+		update gas_order set status = 'CLOSED', closed_at = sysdate(), close_reason = #{closeReason}, update_time = sysdate()
+		where order_id = #{orderId} and status = 'WAIT_CONFIRM'
+	</update>
+
+	<update id="completeOrder">
+		update gas_order
+		set status = 'COMPLETED', actual_volume = #{actualVolume}, completed_shift_id = #{shiftId},
+		    redeem_staff_id = #{staffId}, completed_at = sysdate(), update_time = sysdate()
+		where order_id = #{orderId} and status = 'PAID'
+	</update>
+
+	<select id="selectExpiredWaitConfirm" resultMap="GasOrderResult">
+		<include refid="selectOrderVo"/>
+		where o.status = 'WAIT_CONFIRM' and o.expire_at &lt; #{now}
+		limit 200
+	</select>
+
+	<select id="countByStationId" parameterType="Long" resultType="int">
+		select count(1) from gas_order where station_id = #{stationId}
+	</select>
+
+	<select id="countByGunIds" parameterType="Long" resultType="int">
+		select count(1) from gas_order where gun_id in
+		<foreach collection="array" item="gunId" open="(" separator="," close=")">
+			#{gunId}
+		</foreach>
+	</select>
+
+	<update id="updateExceptionNote">
+		update gas_order
+		set exception_note = #{exceptionNote}, update_time = sysdate()
+		where order_id = #{orderId}
+	</update>
+
+	<select id="selectExpiredWaitPay" parameterType="java.util.Date" resultMap="GasOrderResult">
+		<include refid="selectOrderVo"/>
+		where o.status = 'WAIT_PAY' and o.expire_at &lt; #{now}
+		limit 200
+	</select>
+
+	<insert id="insertOrder" parameterType="GasOrder" useGeneratedKeys="true" keyProperty="orderId">
+		insert into gas_order(
+			order_no, source, status, buyer_id, station_id, gun_id, gun_no, gas_type, member_id, request_id,
+			unit_price, order_amount, discount_amount, pay_amount, coupon_id, est_volume, expire_at,
+			created_shift_id, proxy_staff_id, create_time
+		)values(
+			#{orderNo}, #{source}, #{status}, #{buyerId}, #{stationId}, #{gunId}, #{gunNo}, #{gasType}, #{memberId}, #{requestId},
+			#{unitPrice}, #{orderAmount}, #{discountAmount}, #{payAmount}, #{couponId}, #{estVolume}, #{expireAt},
+			#{createdShiftId}, #{proxyStaffId}, sysdate()
+		)
+	</insert>
+
+	<select id="selectShiftSummary" resultType="java.util.Map">
+		select count(1) as order_count, ifnull(sum(actual_volume), 0) as volume, ifnull(sum(pay_amount), 0) as pay_amount
+		from gas_order
+		where completed_shift_id = #{shiftId} and status = 'COMPLETED'
+	</select>
+
+</mapper>

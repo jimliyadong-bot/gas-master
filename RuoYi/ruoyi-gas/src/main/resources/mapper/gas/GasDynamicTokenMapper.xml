@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.gas.mapper.GasDynamicTokenMapper">
+
+	<resultMap type="GasDynamicToken" id="GasDynamicTokenResult">
+		<id     property="tokenId"   column="token_id"   />
+		<result property="tokenType" column="token_type" />
+		<result property="refId"     column="ref_id"     />
+		<result property="token"     column="token"      />
+		<result property="expireAt"  column="expire_at"  />
+		<result property="usedAt"    column="used_at"    />
+		<result property="createTime" column="create_time" />
+	</resultMap>
+
+	<!-- 30 秒刷新窗口内复用同码（未使用且未过期） -->
+	<select id="selectReusable" resultMap="GasDynamicTokenResult">
+		select token_id, token_type, ref_id, token, expire_at, used_at, create_time
+		from gas_dynamic_token
+		where token_type = #{tokenType} and ref_id = #{refId}
+		  and used_at is null and expire_at > now() and create_time > #{freshWindow}
+		order by token_id desc
+		limit 1
+	</select>
+
+	<!-- 核销用：有效期内未使用的码（60 秒） -->
+	<select id="selectValidByToken" resultMap="GasDynamicTokenResult">
+		select token_id, token_type, ref_id, token, expire_at, used_at, create_time
+		from gas_dynamic_token
+		where token = #{token} and token_type = #{tokenType}
+		  and used_at is null and expire_at > #{now}
+		limit 1
+	</select>
+
+	<update id="markUsed" parameterType="Long">
+		update gas_dynamic_token
+		set used_at = sysdate()
+		where token_id = #{tokenId} and used_at is null and expire_at > sysdate()
+	</update>
+
+	<delete id="deleteExpiredBefore" parameterType="java.util.Date">
+		delete from gas_dynamic_token
+		where expire_at &lt; #{before}
+	</delete>
+
+	<insert id="insertToken" parameterType="GasDynamicToken" useGeneratedKeys="true" keyProperty="tokenId">
+		insert into gas_dynamic_token(
+			token_type, ref_id, token, expire_at, create_time
+		)values(
+			#{tokenType}, #{refId}, #{token}, #{expireAt}, sysdate()
+		)
+	</insert>
+
+</mapper>

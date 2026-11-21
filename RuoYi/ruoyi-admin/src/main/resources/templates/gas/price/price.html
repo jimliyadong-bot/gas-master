@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org" xmlns:shiro="http://www.pollix.at/thymeleaf/shiro">
+<head>
+	<th:block th:include="include :: header('枪价列表')" />
+</head>
+<body class="gray-bg">
+	<div class="container-div">
+		<div class="row">
+			<div class="col-sm-12 search-collapse">
+				<form id="price-form">
+					<div class="select-list">
+						<ul>
+							<li>
+								站点：
+								<select name="stationId" id="stationId">
+									<option value="">所有</option>
+									<option th:each="gun : ${guns}" th:if="${gun.stationId != null}" th:attr="data-station=${gun.stationId}"
+										th:text="${gun.stationName}" th:value="${gun.stationId}"></option>
+								</select>
+							</li>
+							<li>
+								气种：<select name="gasType" th:with="type=${@dict.getType('gas_type')}">
+									<option value="">所有</option>
+									<option th:each="dict : ${type}" th:text="${dict.dictLabel}" th:value="${dict.dictValue}"></option>
+								</select>
+							</li>
+							<li>
+								<a class="btn btn-primary btn-rounded btn-sm" onclick="$.table.search()"><i class="fa fa-search"></i>&nbsp;搜索</a>
+								<a class="btn btn-warning btn-rounded btn-sm" onclick="$.form.reset()"><i class="fa fa-refresh"></i>&nbsp;重置</a>
+							</li>
+						</ul>
+					</div>
+				</form>
+			</div>
+
+			<div class="btn-group-sm" id="toolbar" role="group">
+				<a class="btn btn-success" onclick="$.operate.add()" shiro:hasPermission="gas:price:add">
+					<i class="fa fa-plus"></i> 新价
+				</a>
+				<a class="btn btn-danger multiple disabled" onclick="$.operate.removeAll()" shiro:hasPermission="gas:price:remove">
+					<i class="fa fa-remove"></i> 删除
+				</a>
+			</div>
+
+			<div class="col-sm-12 select-table table-striped">
+				<table id="bootstrap-table"></table>
+			</div>
+		</div>
+	</div>
+	<th:block th:include="include :: footer" />
+	<script th:inline="javascript">
+		var removeFlag = [[${@permission.hasPermi('gas:price:remove')}]];
+		var gasDatas = [[${@dict.getType('gas_type')}]];
+		var prefix = ctx + "gas/price";
+
+		$(function() {
+			// 站点下拉去重（枪列表联查带来的重复站点）
+			var seen = {};
+			$("#stationId option").each(function() {
+				var v = $(this).val();
+				if (seen[v] || v === "") {
+					$(this).remove();
+				} else {
+					seen[v] = true;
+				}
+			});
+
+			var options = {
+				url: prefix + "/list",
+				createUrl: prefix + "/add",
+				removeUrl: prefix + "/remove",
+				modalName: "枪价",
+				columns: [{
+					checkbox: true
+				},
+				{
+					field: 'stationName',
+					title: '所属站点'
+				},
+				{
+					field: 'gunNo',
+					title: '枪号',
+					align: 'center'
+				},
+				{
+					field: 'gasType',
+					title: '气种',
+					align: 'center',
+					formatter: function(value, row, index) {
+						return $.table.selectDictLabel(gasDatas, value);
+					}
+				},
+				{
+					field: 'price',
+					title: '销售单价（元/m³ 或 元/kg）',
+					align: 'right'
+				},
+				{
+					field: 'effectiveFrom',
+					title: '生效时间'
+				},
+				{
+					field: 'effectiveTo',
+					title:			{
+					field: 'effectiveTo',
+					title: '失效时间',
+					formatter: function(value, row, index) {
+						var now = new Date();
+						var from = new Date(String(row.effectiveFrom).replace(/-/g, '/'));
+						var to = value == null || value === '' ? null : new Date(String(value).replace(/-/g, '/'));
+						if (from > now) {
+							return '<span class="label label-info">待生效</span> ' + row.effectiveFrom;
+						}
+						if (to == null || to > now) {
+							return '<span class="label label-success">当前有效</span>';
+						}
+						return value;
+					}
+					},
+				{
+					field: 'remark',
+					title: '调价说明'
+				},
+				{
+					field: 'createBy',
+					title: '操作人'
+				},
+				{
+					title: '操作',
+					align: 'center',
+					formatter: function(value, row, index) {
+						var actions = [];
+						actions.push('<a class="btn btn-danger btn-xs ' + removeFlag + '" href="javascript:void(0)" onclick="$.operate.remove(\'' + row.priceId + '\')"><i class="fa fa-remove"></i>删除</a>');
+						return actions.join('');
+					}
+				}]
+			};
+			$.table.init(options);
+		});
+	</script>
+</body>
+</html>

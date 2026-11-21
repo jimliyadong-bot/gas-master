@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org" xmlns:shiro="http://www.pollix.at/thymeleaf/shiro">
+<head>
+	<th:block th:include="include :: header('枪号列表')" />
+</head>
+<body class="gray-bg">
+	<div class="container-div">
+		<div class="row">
+			<div class="col-sm-12 search-collapse">
+				<form id="gun-form">
+					<div class="select-list">
+						<ul>
+							<li>
+								站点：<input type="text" name="stationName" id="stationName" placeholder="暂支持按编码精确选择，见下方"/>
+							</li>
+							<li>
+								气种：<select name="gasType" th:with="type=${@dict.getType('gas_type')}">
+									<option value="">所有</option>
+									<option th:each="dict : ${type}" th:text="${dict.dictLabel}" th:value="${dict.dictValue}"></option>
+								</select>
+							</li>
+							<li>
+								状态：<select name="status" th:with="type=${@dict.getType('sys_normal_disable')}">
+									<option value="">所有</option>
+									<option th:each="dict : ${type}" th:text="${dict.dictLabel}" th:value="${dict.dictValue}"></option>
+								</select>
+							</li>
+							<li>
+								<a class="btn btn-primary btn-rounded btn-sm" onclick="$.table.search()"><i class="fa fa-search"></i>&nbsp;搜索</a>
+								<a class="btn btn-warning btn-rounded btn-sm" onclick="$.form.reset()"><i class="fa fa-refresh"></i>&nbsp;重置</a>
+							</li>
+						</ul>
+					</div>
+				</form>
+			</div>
+
+			<div class="btn-group-sm" id="toolbar" role="group">
+				<a class="btn btn-success" onclick="$.operate.add()" shiro:hasPermission="gas:gun:add">
+					<i class="fa fa-plus"></i> 新增
+				</a>
+				<a class="btn btn-primary single disabled" onclick="$.operate.edit()" shiro:hasPermission="gas:gun:edit">
+					<i class="fa fa-edit"></i> 修改
+				</a>
+				<a class="btn btn-danger multiple disabled" onclick="$.operate.removeAll()" shiro:hasPermission="gas:gun:remove">
+					<i class="fa fa-remove"></i> 删除
+				</a>
+			</div>
+
+			<div class="col-sm-12 select-table table-striped">
+				<table id="bootstrap-table"></table>
+			</div>
+		</div>
+	</div>
+	<th:block th:include="include :: footer" />
+	<script th:inline="javascript">
+		var editFlag = [[${@permission.hasPermi('gas:gun:edit')}]];
+		var removeFlag = [[${@permission.hasPermi('gas:gun:remove')}]];
+		var statusDatas = [[${@dict.getType('sys_normal_disable')}]];
+		var gasDatas = [[${@dict.getType('gas_type')}]];
+		var prefix = ctx + "gas/gun";
+
+		$(function() {
+			var options = {
+				url: prefix + "/list",
+				createUrl: prefix + "/add",
+				updateUrl: prefix + "/edit/{id}",
+				removeUrl: prefix + "/remove",
+				modalName: "枪号",
+				columns: [{
+					checkbox: true
+				},
+				{
+					field: 'stationName',
+					title: '所属站点',
+					formatter: function(value, row, index) {
+						return $.common.escapeHtml(value) + '（' + $.common.escapeHtml(row.stationCode) + '）';
+					}
+				},
+				{
+					field: 'buyerName',
+					title: '采购商'
+				},
+				{
+					field: 'gunNo',
+					title: '枪号',
+					align: 'center'
+				},
+				{
+					field: 'gasType',
+					title: '气种',
+					align: 'center',
+					formatter: function(value, row, index) {
+						return $.table.selectDictLabel(gasDatas, value);
+					}
+				},
+				{
+					field: 'status',
+					title: '状态',
+					align: 'center',
+					formatter: function(value, row, index) {
+						return $.table.selectDictLabel(statusDatas, value);
+					}
+				},
+				{
+					field: 'remark',
+					title: '备注'
+				},
+				{
+					title: '操作',
+					align: 'center',
+					formatter: function(value, row, index) {
+						var actions = [];
+						actions.push('<a class="btn btn-success btn-xs ' + editFlag + '" href="javascript:void(0)" onclick="$.operate.edit(\'' + row.gunId + '\')"><i class="fa fa-edit"></i>编辑</a> ');
+						actions.push('<a class="btn btn-danger btn-xs ' + removeFlag + '" href="javascript:void(0)" onclick="$.operate.remove(\'' + row.gunId + '\')"><i class="fa fa-remove"></i>删除</a>');
+						return actions.join('');
+					}
+				}]
+			};
+			$.table.init(options);
+		});
+	</script>
+</body>
+</html>

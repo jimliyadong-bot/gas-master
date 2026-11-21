@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org" xmlns:shiro="http://www.pollix.at/thymeleaf/shiro">
+<head>
+	<th:block th:include="include :: header('站点列表')" />
+</head>
+<body class="gray-bg">
+	<div class="container-div">
+		<div class="row">
+			<div class="col-sm-12 search-collapse">
+				<form id="station-form">
+					<div class="select-list">
+						<ul>
+							<li>
+								站点编码：<input type="text" name="stationCode"/>
+							</li>
+							<li>
+								站点名称：<input type="text" name="stationName"/>
+							</li>
+							<li>
+								状态：<select name="status" th:with="type=${@dict.getType('sys_normal_disable')}">
+									<option value="">所有</option>
+									<option th:each="dict : ${type}" th:text="${dict.dictLabel}" th:value="${dict.dictValue}"></option>
+								</select>
+							</li>
+							<li>
+								<a class="btn btn-primary btn-rounded btn-sm" onclick="$.table.search()"><i class="fa fa-search"></i>&nbsp;搜索</a>
+								<a class="btn btn-warning btn-rounded btn-sm" onclick="$.form.reset()"><i class="fa fa-refresh"></i>&nbsp;重置</a>
+							</li>
+						</ul>
+					</div>
+				</form>
+			</div>
+
+			<div class="btn-group-sm" id="toolbar" role="group">
+				<a class="btn btn-success" onclick="$.operate.add()" shiro:hasPermission="gas:station:add">
+					<i class="fa fa-plus"></i> 新增
+				</a>
+				<a class="btn btn-primary single disabled" onclick="$.operate.edit()" shiro:hasPermission="gas:station:edit">
+					<i class="fa fa-edit"></i> 修改
+				</a>
+				<a class="btn btn-danger multiple disabled" onclick="$.operate.removeAll()" shiro:hasPermission="gas:station:remove">
+					<i class="fa fa-remove"></i> 删除
+				</a>
+				<a class="btn btn-warning" onclick="$.table.exportExcel()" shiro:hasPermission="gas:station:export">
+					<i class="fa fa-download"></i> 导出
+				</a>
+			</div>
+
+			<div class="col-sm-12 select-table table-striped">
+				<table id="bootstrap-table"></table>
+			</div>
+		</div>
+	</div>
+	<th:block th:include="include :: footer" />
+	<script th:inline="javascript">
+		var editFlag = [[${@permission.hasPermi('gas:station:edit')}]];
+		var removeFlag = [[${@permission.hasPermi('gas:station:remove')}]];
+		var datas = [[${@dict.getType('sys_normal_disable')}]];
+		var prefix = ctx + "gas/station";
+
+		$(function() {
+			var options = {
+				url: prefix + "/list",
+				createUrl: prefix + "/add",
+				updateUrl: prefix + "/edit/{id}",
+				removeUrl: prefix + "/remove",
+				exportUrl: prefix + "/export",
+				modalName: "站点",
+				columns: [{
+					checkbox: true
+				},
+				{
+					field: 'stationCode',
+					title: '站点编码'
+				},
+				{
+					field: 'stationName',
+					title: '站点名称'
+				},
+				{
+					field: 'buyerName',
+					title: '所属采购商'
+				},
+				{
+					field: 'address',
+					title: '地址'
+				},
+				{
+					field: 'qrToken',
+					title: '二维码标识',
+					visible: false
+				},
+				{
+					field: 'status',
+					title: '状态',
+					align: 'center',
+					formatter: function(value, row, index) {
+						return $.table.selectDictLabel(datas, value);
+					}
+				},
+				{
+					field: 'createTime',
+					title: '创建时间'
+				},
+				{
+					title: '操作',
+					align: 'center',
+					formatter: function(value, row, index) {
+						var actions = [];
+						actions.push('<a class="btn btn-success btn-xs ' + editFlag + '" href="javascript:void(0)" onclick="$.operate.edit(\'' + row.stationId + '\')"><i class="fa fa-edit"></i>编辑</a> ');
+						actions.push('<a class="btn btn-info btn-xs" href="' + prefix + '/qrcode/' + row.stationId + '" title="下载站点二维码（内容=H5下单地址）"><i class="fa fa-qrcode"></i>二维码</a> ');
+						actions.push('<a class="btn btn-danger btn-xs ' + removeFlag + '" href="javascript:void(0)" onclick="$.operate.remove(\'' + row.stationId + '\')"><i class="fa fa-remove"></i>删除</a>');
+						return actions.join('');
+					}
+				}]
+			};
+			$.table.init(options);
+		});
+	</script>
+</body>
+</html>

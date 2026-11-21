@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.gas.mapper.GasOrderLogMapper">
+
+	<resultMap type="GasOrderLog" id="GasOrderLogResult">
+		<id     property="logId"        column="log_id"         />
+		<result property="orderId"      column="order_id"       />
+		<result property="fromStatus"   column="from_status"    />
+		<result property="toStatus"     column="to_status"      />
+		<result property="action"       column="action"         />
+		<result property="operatorType" column="operator_type"  />
+		<result property="operator"     column="operator"       />
+		<result property="reason"       column="reason"         />
+		<result property="createTime"   column="create_time"    />
+	</resultMap>
+
+	<select id="selectLogsByOrderId" parameterType="Long" resultMap="GasOrderLogResult">
+		select log_id, order_id, from_status, to_status, action, operator_type, operator, reason, create_time
+		from gas_order_log
+		where order_id = #{orderId}
+		order by log_id
+	</select>
+
+	<insert id="insertLog" parameterType="GasOrderLog" useGeneratedKeys="true" keyProperty="logId">
+		insert into gas_order_log(
+			order_id,
+			<if test="fromStatus != null and fromStatus != ''">from_status,</if>
+			to_status, action, operator_type, operator,
+			<if test="reason != null and reason != ''">reason,</if>
+			create_time
+		)values(
+			#{orderId},
+			<if test="fromStatus != null and fromStatus != ''">#{fromStatus},</if>
+			#{toStatus}, #{action}, #{operatorType}, #{operator},
+			<if test="reason != null and reason != ''">#{reason},</if>
+			sysdate()
+		)
+	</insert>
+
+</mapper>

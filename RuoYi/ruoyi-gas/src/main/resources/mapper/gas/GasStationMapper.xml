@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.gas.mapper.GasStationMapper">
+
+	<resultMap type="GasStation" id="GasStationResult">
+		<id     property="stationId"   column="station_id"   />
+		<result property="stationCode" column="station_code" />
+		<result property="stationName" column="station_name" />
+		<result property="buyerId"     column="buyer_id"     />
+		<result property="deptId"      column="dept_id"      />
+		<result property="address"     column="address"      />
+		<result property="qrToken"     column="qr_token"     />
+		<result property="status"      column="status"       />
+		<result property="delFlag"     column="del_flag"     />
+		<result property="createBy"    column="create_by"    />
+		<result property="createTime"  column="create_time"  />
+		<result property="updateBy"    column="update_by"    />
+		<result property="updateTime"  column="update_time"  />
+		<result property="remark"      column="remark"       />
+		<result property="buyerName"   column="buyer_name"   />
+	</resultMap>
+
+	<sql id="selectStationVo">
+        select s.station_id, s.station_code, s.station_name, s.buyer_id, s.dept_id, s.address,
+               s.qr_token, s.status, s.del_flag, s.create_by, s.create_time, s.update_by, s.update_time, s.remark,
+               b.buyer_name
+        from gas_station s
+        left join gas_buyer b on s.buyer_id = b.buyer_id
+    </sql>
+
+	<select id="selectStationList" parameterType="GasStation" resultMap="GasStationResult">
+		<include refid="selectStationVo"/>
+		<where>
+			s.del_flag = '0'
+			<if test="stationId != null and stationId != 0">
+				AND s.station_id = #{stationId}
+			</if>
+			<if test="stationCode != null and stationCode != ''">
+				AND s.station_code like concat('%', #{stationCode}, '%')
+			</if>
+			<if test="stationName != null and stationName != ''">
+				AND s.station_name like concat('%', #{stationName}, '%')
+			</if>
+			<if test="buyerId != null and buyerId != 0">
+				AND s.buyer_id = #{buyerId}
+			</if>
+			<if test="status != null and status != ''">
+				AND s.status = #{status}
+			</if>
+		</where>
+		order by s.station_id
+	</select>
+
+	<select id="selectStationById" parameterType="Long" resultMap="GasStationResult">
+		<include refid="selectStationVo"/>
+		where s.station_id = #{stationId} and s.del_flag = '0'
+	</select>
+
+	<select id="selectStationByQrToken" parameterType="String" resultMap="GasStationResult">
+		<include refid="selectStationVo"/>
+		where s.qr_token = #{qrToken} and s.del_flag = '0' and s.status = '0' limit 1
+	</select>
+
+	<select id="selectStationByDeptId" parameterType="Long" resultMap="GasStationResult">
+		<include refid="selectStationVo"/>
+		where s.dept_id = #{deptId} and s.del_flag = '0' limit 1
+	</select>
+
+	<select id="checkStationCodeUnique" parameterType="String" resultMap="GasStationResult">
+		<include refid="selectStationVo"/>
+		where s.station_code = #{stationCode} and s.del_flag = '0' limit 1
+	</select>
+
+	<select id="countStationByBuyerId" parameterType="Long" resultType="int">
+		select count(1) from gas_station where buyer_id = #{buyerId} and del_flag = '0'
+	</select>
+
+	<insert id="insertStation" parameterType="GasStation" useGeneratedKeys="true" keyProperty="stationId">
+		insert into gas_station(
+			<if test="stationCode != null and stationCode != ''">station_code,</if>
+			<if test="stationName != null and stationName != ''">station_name,</if>
+			<if test="buyerId != null and buyerId != 0">buyer_id,</if>
+			<if test="deptId != null and deptId != 0">dept_id,</if>
+			<if test="address != null">address,</if>
+			qr_token,
+			<if test="status != null and status != ''">status,</if>
+			<if test="remark != null">remark,</if>
+			<if test="createBy != null and createBy != ''">create_by,</if>
+			create_time
+		)values(
+			<if test="stationCode != null and stationCode != ''">#{stationCode},</if>
+			<if test="stationName != null and stationName != ''">#{stationName},</if>
+			<if test="buyerId != null and buyerId != 0">#{buyerId},</if>
+			<if test="deptId != null and deptId != 0">#{deptId},</if>
+			<if test="address != null">#{address},</if>
+			#{qrToken},
+			<if test="status != null and status != ''">#{status},</if>
+			<if test="remark != null">#{remark},</if>
+			<if test="createBy != null and createBy != ''">#{createBy},</if>
+			sysdate()
+		)
+	</insert>
+
+	<update id="updateStation" parameterType="GasStation">
+		update gas_station
+		<set>
+			<if test="stationCode != null and stationCode != ''">station_code = #{stationCode},</if>
+			<if test="stationName != null and stationName != ''">station_name = #{stationName},</if>
+			<if test="buyerId != null and buyerId != 0">buyer_id = #{buyerId},</if>
+			<if test="address != null">address = #{address},</if>
+			<if test="status != null and status != ''">status = #{status},</if>
+			<if test="remark != null">remark = #{remark},</if>
+			<if test="updateBy != null and updateBy != ''">update_by = #{updateBy},</if>
+			update_time = sysdate()
+		</set>
+		where station_id = #{stationId}
+	</update>
+
+	<update id="deleteStationByIds" parameterType="Long">
+		update gas_station set del_flag = '2' where station_id in
+		<foreach collection="array" item="stationId" open="(" separator="," close=")">
+			#{stationId}
+		</foreach>
+	</update>
+
+</mapper>

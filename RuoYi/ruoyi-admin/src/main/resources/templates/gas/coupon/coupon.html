@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org" xmlns:shiro="http://www.pollix.at/thymeleaf/shiro">
+<head><th:block th:include="include :: header('优惠券管理')" /></head>
+<body class="gray-bg">
+<div class="container-div"><div class="row">
+    <div class="col-sm-12 search-collapse"><form id="coupon-form"><div class="select-list"><ul>
+        <li>券名称：<input type="text" name="name"/></li>
+        <li>状态：<select name="status"><option value="">全部</option><option value="0">正常</option><option value="1">停用</option></select></li>
+        <li><a class="btn btn-primary btn-rounded btn-sm" onclick="$.table.search()"><i class="fa fa-search"></i> 搜索</a>
+            <a class="btn btn-warning btn-rounded btn-sm" onclick="$.form.reset()"><i class="fa fa-refresh"></i> 重置</a></li>
+    </ul></div></form></div>
+    <div class="btn-group-sm" id="toolbar" role="group">
+        <a class="btn btn-success" onclick="$.operate.add()" shiro:hasPermission="gas:coupon:add"><i class="fa fa-plus"></i> 新增模板</a>
+    </div>
+    <div class="col-sm-12 select-table table-striped"><table id="bootstrap-table"></table></div>
+</div></div>
+<th:block th:include="include :: footer" />
+<script th:inline="javascript">
+var editFlag = [[${@permission.hasPermi('gas:coupon:edit')}]];
+var grantFlag = [[${@permission.hasPermi('gas:coupon:grant')}]];
+var prefix = ctx + 'gas/coupon';
+$(function() {
+    $.table.init({
+        url: prefix + '/list', createUrl: prefix + '/add', modalName: '优惠券模板', id: 'templateId',
+        columns: [
+            { checkbox: true },
+            { field: 'templateId', title: '模板ID' },
+            { field: 'buyerName', title: '采购商', formatter: function(v) { return $.common.escapeHtml(v); } },
+            { field: 'name', title: '券名称', formatter: function(v) { return $.common.escapeHtml(v); } },
+            { field: 'faceValue', title: '面额(元)' },
+            { field: 'thresholdAmount', title: '门槛(元)' },
+            { title: '有效期', formatter: function(v,row) { return row.validType === 'DAYS' ? '领取后 ' + row.validDays + ' 天' : row.validFrom + '<br>' + row.validTo; } },
+            { field: 'totalQty', title: '总量' },
+            { field: 'issuedQty', title: '已发放' },
+            { field: 'usedQty', title: '已核销' },
+            { field: 'discountTotal', title: '核销优惠(元)' },
+            { field: 'status', title: '状态', formatter: function(v) { return v === '0' ? '<span class="label label-primary">正常</span>' : '<span class="label">停用</span>'; } },
+            { title: '操作', align: 'center', formatter: function(v,row) {
+                var a = [];
+                a.push('<a class="btn btn-success btn-xs ' + editFlag + '" href="javascript:void(0)" onclick="$.modal.open(\'编辑模板\',prefix+\'/edit/' + row.templateId + '\')"><i class="fa fa-edit"></i>编辑</a> ');
+                a.push('<a class="btn btn-primary btn-xs ' + grantFlag + '" href="javascript:void(0)" onclick="$.modal.open(\'定向发券\',prefix+\'/grant/' + row.templateId + '\')"><i class="fa fa-gift"></i>发放</a> ');
+                a.push('<a class="btn btn-info btn-xs" href="javascript:void(0)" onclick="$.modal.open(\'发放与核销记录\',prefix+\'/records/' + row.templateId + '\')"><i class="fa fa-list"></i>记录</a>');
+                return a.join('');
+            } }
+        ]
+    });
+});
+</script>
+</body></html>

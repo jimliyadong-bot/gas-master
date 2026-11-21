@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>采购与库存 · 采购方后台</title>
+<link rel="stylesheet" href="assets/tailwind.css">
+<link rel="stylesheet" href="assets/vendor/fontawesome/css/all.min.css">
+</head>
+<body data-shell="admin" data-crumb="采购与资源/采购与库存">
+<main id="main" class="p-6 space-y-4">
+  <div class="flex items-center justify-between">
+    <div><h1 class="text-xl font-bold">采购与库存</h1><p class="text-sm text-ink-500 mt-0.5">登记采购批次和付款；支付订单预占预计气量，核销后按确认量更新库存</p></div>
+    <div class="flex gap-2"><button class="btn-ghost" data-open="#mode"><i class="fa-solid fa-sliders"></i>库存模式</button><button class="btn-primary" data-open="#purchase"><i class="fa-solid fa-plus"></i>登记采购</button></div>
+  </div>
+
+  <section class="grid grid-cols-4 gap-4">
+    <div class="card p-4"><div class="kpi-label">可用库存</div><div class="kpi-value mt-1">39,214 <span class="text-sm">m³</span></div><div class="text-xs text-ink-500 mt-1">另有 14,940 kg LNG</div></div>
+    <div class="card p-4"><div class="kpi-label">支付预占</div><div class="kpi-value mt-1">2,566 <span class="text-sm">m³</span></div><div class="text-xs text-ink-500 mt-1">另有 420 kg LNG 待核销</div></div>
+    <div class="card p-4"><div class="kpi-label">本月采购</div><div class="kpi-value mt-1">124,800 <span class="text-sm">m³</span></div><div class="text-xs text-ink-500 mt-1">采购金额 ¥398,640</div></div>
+    <div class="card p-4"><div class="kpi-label">库存预警</div><div class="kpi-value mt-1 text-bad">2 个站点</div><div class="text-xs text-ink-500 mt-1">建议及时安排采购</div></div>
+  </section>
+
+  <section class="card p-4 flex flex-wrap items-end gap-3">
+    <div><label class="label">库存口径</label><select class="field w-48"><option>按站点独立库存</option><option>采购方共享库存</option></select></div>
+    <div><label class="label">站点</label><select class="field w-48"><option>全部站点</option><option>高新区油气合建站</option><option>城北 CNG 加气站</option></select></div>
+    <div><label class="label">气种</label><select class="field w-32"><option>全部</option><option>CNG</option><option>LNG</option></select></div>
+    <button class="btn-primary"><i class="fa-solid fa-magnifying-glass"></i>查询</button>
+    <span class="ml-auto text-xs text-ink-500">库存模式按采购方配置；共享库存仍按气种分别核算</span>
+  </section>
+
+  <section class="card">
+    <div class="px-5 pt-4 pb-3 flex items-center justify-between"><h2 class="font-semibold">站点库存概览</h2><button class="btn-ghost btn-sm"><i class="fa-solid fa-download"></i>导出</button></div>
+    <table class="tbl">
+      <thead><tr><th>站点</th><th>气种</th><th class="num">累计采购</th><th class="num">已核销出气</th><th class="num">支付预占</th><th class="num">剩余可用</th><th>预警值</th><th>状态</th><th>操作</th></tr></thead>
+      <tbody>
+        <tr class="bg-red-50/40"><td class="font-medium">高新区油气合建站</td><td><span class="tag-cng">CNG</span></td><td class="num">128,000 m³</td><td class="num">112,360 m³</td><td class="num">1,286 m³</td><td class="num font-semibold text-bad">14,354 m³</td><td class="text-ink-500">20,000 m³</td><td><span class="tag-bad">低于预警</span></td><td class="text-brand-500"><button data-open="#purchase">补充采购</button></td></tr>
+        <tr><td class="font-medium">城北 CNG 加气站</td><td><span class="tag-cng">CNG</span></td><td class="num">96,000 m³</td><td class="num">70,280 m³</td><td class="num">860 m³</td><td class="num">24,860 m³</td><td class="text-ink-500">15,000 m³</td><td><span class="tag-ok">正常</span></td><td class="text-brand-500"><button data-open="#purchase">登记采购</button></td></tr>
+        <tr><td class="font-medium">港区 LNG 物流站</td><td><span class="tag-lng">LNG</span></td><td class="num">48,000 kg</td><td class="num">32,640 kg</td><td class="num">420 kg</td><td class="num">14,940 kg</td><td class="text-ink-500">8,000 kg</td><td><span class="tag-ok">正常</span></td><td class="text-brand-500"><button data-open="#purchase">登记采购</button></td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="card">
+    <div class="px-5 pt-4 pb-3 flex items-center justify-between"><h2 class="font-semibold">最近采购批次</h2><a href="a-finance.html" class="text-sm text-brand-500">查看付款记录</a></div>
+    <table class="tbl">
+      <thead><tr><th>批次号</th><th>采购日期</th><th>站点 / 气种</th><th class="num">采购量</th><th class="num">单价</th><th class="num">采购金额</th><th>付款状态</th><th>票据状态</th><th>操作</th></tr></thead>
+      <tbody>
+        <tr><td class="font-mono text-xs">PO-20261112-018</td><td>2026-11-12</td><td>高新区油气合建站 · CNG</td><td class="num">20,000 m³</td><td class="num">¥3.12/m³</td><td class="num">¥62,400</td><td><span class="tag-warn">部分付款</span></td><td><span class="tag-warn">待开票</span></td><td class="text-brand-500"><button data-toast="原型：查看采购批次流水">流水</button></td></tr>
+        <tr><td class="font-mono text-xs">PO-20261110-011</td><td>2026-11-10</td><td>城北 CNG 加气站 · CNG</td><td class="num">16,000 m³</td><td class="num">¥3.08/m³</td><td class="num">¥49,280</td><td><span class="tag-ok">已付清</span></td><td><span class="tag-ok">已登记</span></td><td class="text-brand-500"><button data-toast="原型：查看采购批次流水">流水</button></td></tr>
+      </tbody>
+    </table>
+  </section>
+</main>
+
+<aside class="drawer" id="purchase" role="dialog" aria-label="登记采购批次">
+  <div class="h-14 px-5 flex items-center justify-between border-b border-ink-100"><b>登记采购批次</b><button data-close aria-label="关闭"><i class="fa-solid fa-xmark text-ink-500"></i></button></div>
+  <div class="flex-1 overflow-y-auto p-5 space-y-4 text-sm">
+    <div class="grid grid-cols-2 gap-3"><div><label class="label">站点 *</label><select class="field"><option>高新区油气合建站</option><option>城北 CNG 加气站</option></select></div><div><label class="label">气种 *</label><select class="field"><option>CNG</option><option>LNG</option></select></div></div>
+    <div><label class="label">采购日期 *</label><input class="field" value="2026-11-13"></div>
+    <div class="grid grid-cols-2 gap-3"><div><label class="label">采购数量 *</label><input class="field" value="20,000"></div><div><label class="label">计量单位</label><input class="field bg-page" value="m³" disabled></div></div>
+    <div class="grid grid-cols-2 gap-3"><div><label class="label">采购单价</label><input class="field" value="3.12"></div><div><label class="label">采购金额 *</label><input class="field" value="62,400.00"></div></div>
+    <div class="grid grid-cols-2 gap-3"><div><label class="label">付款状态</label><select class="field"><option>未付款</option><option>部分付款</option><option>已付清</option></select></div><div><label class="label">付款日期</label><input class="field" type="date"></div></div>
+    <div><label class="label">票据状态</label><select class="field"><option>待开票</option><option>已开票</option><option>无需开票</option></select></div>
+    <div><label class="label">凭证与备注</label><textarea class="field h-20 py-2" placeholder="付款凭证编号、票据说明等"></textarea></div>
+    <div class="rounded-lg bg-brand-50 text-brand-700 text-xs p-3">保存后生成采购批次和库存流水；付款、票据状态可后续补录。</div>
+  </div>
+  <div class="h-16 px-5 border-t border-ink-100 flex items-center justify-end gap-2"><button class="btn-ghost" data-close>取消</button><button class="btn-primary" data-close data-toast="采购批次已登记">保存采购</button></div>
+</aside>
+
+<aside class="drawer" id="mode" role="dialog" aria-label="库存模式">
+  <div class="h-14 px-5 flex items-center justify-between border-b border-ink-100"><b>库存模式与预警</b><button data-close aria-label="关闭"><i class="fa-solid fa-xmark text-ink-500"></i></button></div>
+  <div class="flex-1 p-5 space-y-4 text-sm">
+    <div><label class="label">库存模式</label><select class="field"><option>按站点独立库存</option><option>采购方共享库存（按气种区分）</option></select></div>
+    <div><label class="label">默认余量预警值</label><input class="field" value="20,000 m³"></div>
+    <p class="rounded-lg bg-amber-50 text-amber-800 text-xs p-3">切换库存模式前需确认已有库存、预占订单和采购批次的归属规则；原型仅展示配置入口。</p>
+  </div>
+  <div class="h-16 px-5 border-t border-ink-100 flex items-center justify-end gap-2"><button class="btn-ghost" data-close>取消</button><button class="btn-primary" data-close data-toast="库存配置已保存">保存设置</button></div>
+</aside>
+<script src="assets/js/common.js"></script>
+</body>
+</html>

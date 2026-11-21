@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.gas.mapper.GasInventoryLedgerMapper">
+
+	<resultMap type="GasInventoryLedger" id="GasInventoryLedgerResult">
+		<id     property="ledgerId"    column="ledger_id"    />
+		<result property="poolId"      column="pool_id"      />
+		<result property="receiptId"   column="receipt_id"   />
+		<result property="orderId"     column="order_id"     />
+		<result property="bizType"     column="biz_type"     />
+		<result property="qty"         column="qty"          />
+		<result property="reason"      column="reason"       />
+		<result property="operator"    column="operator"     />
+		<result property="createTime"  column="create_time"  />
+		<result property="stationId"   column="station_id"   />
+		<result property="buyerId"     column="buyer_id"     />
+		<result property="stationName" column="station_name" />
+		<result property="gasType"     column="gas_type"     />
+		<result property="batchNo"     column="batch_no"     />
+	</resultMap>
+
+	<sql id="selectLedgerVo">
+        select l.ledger_id, l.pool_id, l.receipt_id, l.order_id, l.biz_type, l.qty, l.reason, l.operator, l.create_time,
+               p.station_id, p.buyer_id, p.gas_type, s.station_name, b.batch_no
+        from gas_inventory_ledger l
+        left join gas_inventory_pool p on l.pool_id = p.pool_id
+        left join gas_station s on p.station_id = s.station_id
+        left join gas_purchase_receipt r on l.receipt_id = r.receipt_id
+        left join gas_purchase_batch b on r.batch_id = b.batch_id
+    </sql>
+
+	<select id="selectLedgerList" parameterType="GasInventoryLedger" resultMap="GasInventoryLedgerResult">
+		<include refid="selectLedgerVo"/>
+		<where>
+			<if test="poolId != null and poolId != 0">
+				AND l.pool_id = #{poolId}
+			</if>
+			<if test="stationId != null and stationId != 0">
+				AND p.station_id = #{stationId}
+			</if>
+			<if test="buyerId != null and buyerId != 0">
+				AND p.buyer_id = #{buyerId}
+			</if>
+			<if test="gasType != null and gasType != ''">
+				AND p.gas_type = #{gasType}
+			</if>
+			<if test="bizType != null and bizType != ''">
+				AND l.biz_type = #{bizType}
+			</if>
+			<if test="orderId != null and orderId != 0">
+				AND l.order_id = #{orderId}
+			</if>
+			<if test="batchNo != null and batchNo != ''">
+				AND b.batch_no like concat('%', #{batchNo}, '%')
+			</if>
+			<if test="params.beginDate != null and params.beginDate != ''">
+				AND l.create_time &gt;= #{params.beginDate}
+			</if>
+			<if test="params.endDate != null and params.endDate != ''">
+				AND l.create_time &lt;= #{params.endDate}
+			</if>
+		</where>
+		order by l.create_time desc, l.ledger_id desc
+	</select>
+
+	<insert id="insertLedger" parameterType="GasInventoryLedger" useGeneratedKeys="true" keyProperty="ledgerId">
+		insert into gas_inventory_ledger(pool_id, receipt_id, order_id, biz_type, qty,
+			<if test="reason != null">reason,</if>
+			operator, create_time
+		)values(
+			#{poolId}, #{receiptId}, #{orderId}, #{bizType}, #{qty},
+			<if test="reason != null">#{reason},</if>
+			#{operator}, sysdate()
+		)
+	</insert>
+
+	<select id="countByOrder" resultType="int">
+		select count(1) from gas_inventory_ledger where order_id = #{orderId} and biz_type = #{bizType}
+		for update
+	</select>
+
+	<!-- 订单在当前池的有效预占：禁止跨站/跨气种挪用 -->
+	<select id="sumOrderReserved" resultType="java.math.BigDecimal">
+		select ifnull(sum(case biz_type when 'RESERVE' then qty when 'RELEASE' then -qty when 'CONSUME' then -qty else 0 end), 0)
+		from gas_inventory_ledger where order_id = #{orderId} and pool_id = #{poolId}
+		for update
+	</select>
+
+	<!-- 按池重算：IN/ADJUST 加、CONSUME 减；RESERVE/RELEASE 相互抵消不参与可用量（预占只在池字段上） -->
+	<select id="sumByPool" parameterType="Long" resultType="java.math.BigDecimal">
+		select ifnull(sum(case biz_type when 'IN' then qty when 'ADJUST' then qty when 'CONSUME' then -qty else 0 end), 0)
+		from gas_inventory_ledger where pool_id = #{poolId}
+	</select>
+
+</mapper>

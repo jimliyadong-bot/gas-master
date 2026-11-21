@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.gas.mapper.GasGunPriceMapper">
+
+	<resultMap type="GasGunPrice" id="GasGunPriceResult">
+		<id     property="priceId"       column="price_id"       />
+		<result property="gunId"         column="gun_id"         />
+		<result property="price"         column="price"          />
+		<result property="effectiveFrom" column="effective_from" />
+		<result property="effectiveTo"   column="effective_to"   />
+		<result property="createBy"      column="create_by"      />
+		<result property="createTime"    column="create_time"    />
+		<result property="remark"        column="remark"         />
+		<result property="gunNo"         column="gun_no"         />
+		<result property="gasType"       column="gas_type"       />
+		<result property="stationId"     column="station_id"     />
+		<result property="stationName"   column="station_name"   />
+		<result property="buyerName"     column="buyer_name"     />
+	</resultMap>
+
+	<sql id="selectPriceVo">
+        select p.price_id, p.gun_id, p.price, p.effective_from, p.effective_to,
+               p.create_by, p.create_time, p.remark,
+               g.gun_no, g.gas_type, g.station_id, s.station_name, b.buyer_name
+        from gas_gun_price p
+        left join gas_gun g on p.gun_id = g.gun_id
+        left join gas_station s on g.station_id = s.station_id
+        left join gas_buyer b on s.buyer_id = b.buyer_id
+    </sql>
+
+	<select id="selectPriceList" parameterType="GasGunPrice" resultMap="GasGunPriceResult">
+		<include refid="selectPriceVo"/>
+		<where>
+			<if test="gunId != null and gunId != 0">
+				AND p.gun_id = #{gunId}
+			</if>
+			<if test="stationId != null and stationId != 0">
+				AND g.station_id = #{stationId}
+			</if>
+			<if test="gasType != null and gasType != ''">
+				AND g.gas_type = #{gasType}
+			</if>
+			<if test="params.onlyCurrent != null and params.onlyCurrent == 'true'">
+				AND p.effective_from &lt;= now() and (p.effective_to is null or p.effective_to &gt; now())
+			</if>
+		</where>
+		order by p.gun_id, p.effective_from desc
+	</select>
+
+	<select id="selectPriceById" parameterType="Long" resultMap="GasGunPriceResult">
+		<include refid="selectPriceVo"/>
+		where p.price_id = #{priceId}
+	</select>
+
+	<select id="selectCurrentPriceByGunId" parameterType="Long" resultMap="GasGunPriceResult">
+		<include refid="selectPriceVo"/>
+		where p.gun_id = #{gunId}
+		  and p.effective_from &lt;= now()
+		  and (p.effective_to is null or p.effective_to &gt; now())
+		order by p.effective_from desc limit 1
+	</select>
+
+	<!-- 链尾开口价（effective_to 为空的最新一条，可能是当前生效价，也可能是预置的未来价）；调价与删除据此维护价格链 -->
+	<select id="selectLatestPriceByGunId" parameterType="Long" resultMap="GasGunPriceResult">
+		<include refid="selectPriceVo"/>
+		where p.gun_id = #{gunId} and p.effective_to is null
+		order by p.effective_from desc limit 1
+	</select>
+
+	<update id="closeCurrentPrice">
+		update gas_gun_price set effective_to = #{effectiveTo}
+		where gun_id = #{gunId} and effective_to is null
+	</update>
+
+	<select id="selectPrevPrice" resultMap="GasGunPriceResult">
+		<include refid="selectPriceVo"/>
+		where p.gun_id = #{gunId} and p.effective_from &lt; #{effectiveFrom}
+		order by p.effective_from desc limit 1
+	</select>
+
+	<select id="countNewerPrices" resultType="int">
+		select count(1) from gas_gun_price
+		where gun_id = #{gunId} and effective_from &gt; #{effectiveFrom}
+	</select>
+
+	<update id="reopenPriceById" parameterType="Long">
+		update gas_gun_price set effective_to = null where price_id = #{priceId}
+	</update>
+
+	<insert id="insertPrice" parameterType="GasGunPrice" useGeneratedKeys="true" keyProperty="priceId">
+		insert into gas_gun_price(
+			<if test="gunId != null and gunId != 0">gun_id,</if>
+			<if test="price != null">price,</if>
+			<if test="effectiveFrom != null">effective_from,</if>
+			<if test="remark != null">remark,</if>
+			<if test="createBy != null and createBy != ''">create_by,</if>
+			create_time
+		)values(
+			<if test="gunId != null and gunId != 0">#{gunId},</if>
+			<if test="price != null">#{price},</if>
+			<if test="effectiveFrom != null">#{effectiveFrom},</if>
+			<if test="remark != null">#{remark},</if>
+			<if test="createBy != null and createBy != ''">#{createBy},</if>
+			sysdate()
+		)
+	</insert>
+
+	<delete id="deletePriceByIds" parameterType="Long">
+		delete from gas_gun_price where price_id in
+		<foreach collection="array" item="priceId" open="(" separator="," close=")">
+			#{priceId}
+		</foreach>
+	</delete>
+
+	<delete id="deletePriceByGunIds" parameterType="Long">
+		delete from gas_gun_price where gun_id in
+		<foreach collection="array" item="gunId" open="(" separator="," close=")">
+			#{gunId}
+		</foreach>
+	</delete>
+
+</mapper>

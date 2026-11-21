@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org" xmlns:shiro="http://www.pollix.at/thymeleaf/shiro">
+<head>
+	<th:block th:include="include :: header('采购付款登记')" />
+</head>
+<body class="gray-bg">
+	<div class="container-div">
+		<div class="row">
+			<div class="col-sm-12 search-collapse">
+				<form id="payment-form">
+					<div class="select-list">
+						<ul>
+							<li>批次号：<input type="text" name="batchNo"></li>
+							<li>付款方式：<select name="payMethod" th:with="pm=${@dict.getType('gas_purchase_pay_method')}">
+									<option value="">所有</option>
+									<option th:each="dict : ${pm}" th:text="${dict.dictLabel}" th:value="${dict.dictValue}"></option>
+								</select></li>
+							<li>
+								<a class="btn btn-primary btn-rounded btn-sm" onclick="$.table.search()"><i class="fa fa-search"></i>&nbsp;搜索</a>
+								<a class="btn btn-warning btn-rounded btn-sm" onclick="$.form.reset()"><i class="fa fa-refresh"></i>&nbsp;重置</a>
+							</li>
+						</ul>
+					</div>
+				</form>
+			</div>
+
+			<div class="btn-group-sm" id="toolbar" role="group">
+				<a class="btn btn-success" onclick="$.operate.add()" shiro:hasPermission="gas:payment:add"><i class="fa fa-plus"></i> 付款登记</a>
+				<a class="btn btn-warning" onclick="$.table.exportExcel()" shiro:hasPermission="gas:payment:export"><i class="fa fa-download"></i> 导出</a>
+				<a class="btn btn-danger multiple disabled" onclick="$.operate.removeAll()" shiro:hasPermission="gas:payment:remove"><i class="fa fa-remove"></i> 删除</a>
+			</div>
+
+			<div class="col-sm-12 select-table table-striped">
+				<table id="bootstrap-table"></table>
+			</div>
+		</div>
+	</div>
+	<th:block th:include="include :: footer" />
+	<script th:inline="javascript">
+		var removeFlag = [[${@permission.hasPermi('gas:payment:remove')}]];
+		var methodDatas = [[${@dict.getType('gas_purchase_pay_method')}]];
+		var prefix = ctx + "gas/purchase/payment";
+
+		$(function() {
+			var options = {
+				url: prefix + "/list",
+				createUrl: prefix + "/add",
+				removeUrl: prefix + "/remove",
+				exportUrl: prefix + "/export",
+				modalName: "付款登记",
+				columns: [{
+					checkbox: true
+				},
+				{ field: 'batchNo', title: '批次号' },
+				{ field: 'stationName', title: '所属站点' },
+				{ field: 'buyerName', title: '采购商' },
+				{ field: 'amount', title: '付款金额', align: 'right' },
+				{ field: 'paidAt', title: '付款日期' },
+				{ field: 'payMethod', title: '付款方式', align: 'center', formatter: function(v) { return $.table.selectDictLabel(methodDatas, v); } },
+				{ field: 'createBy', title: '登记人' },
+				{ field: 'remark', title: '备注' },
+				{
+					title: '操作', align: 'center',
+					formatter: function(value, row, index) {
+						return '<a class="btn btn-danger btn-xs ' + removeFlag + '" href="javascript:void(0)" onclick="$.operate.remove(\'' + row.paymentId + '\')"><i class="fa fa-remove"></i>删除</a>';
+					}
+				}]
+			};
+			$.table.init(options);
+		});
+	</script>
+</body>
+</html>

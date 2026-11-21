@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org">
+<head><th:block th:include="include :: header('优惠券发放与核销记录')" /></head>
+<body class="gray-bg"><div class="container-div"><div class="row">
+    <div class="col-sm-12 search-collapse"><form id="coupon-record-form"><div class="select-list"><ul>
+        <li>手机号：<input type="text" name="memberPhone"/></li>
+        <li>状态：<select name="status"><option value="">全部</option><option value="UNUSED">未使用</option><option value="USED">已使用/锁定</option><option value="EXPIRED">已过期</option></select></li>
+        <li><a class="btn btn-primary btn-rounded btn-sm" onclick="$.table.search()"><i class="fa fa-search"></i> 搜索</a></li>
+    </ul></div></form></div>
+    <div class="col-sm-12 select-table table-striped"><table id="bootstrap-table"></table></div>
+</div></div><th:block th:include="include :: footer" />
+<script th:inline="javascript">
+var prefix = ctx + 'gas/coupon';
+var templateId = [[${template.templateId}]];
+$(function() {
+    $.table.init({
+        url: prefix + '/couponList', queryParams: function(params) { return $.extend($.table.queryParams(params), { templateId: templateId }); },
+        columns: [
+            { field: 'couponId', title: '券ID' }, { field: 'memberPhone', title: '会员手机号', formatter: function(v) { return $.common.escapeHtml(v); } },
+            { field: 'faceValue', title: '面额' }, { field: 'thresholdAmount', title: '门槛' },
+            { field: 'status', title: '券状态', formatter: function(v) { return $.common.escapeHtml(v); } }, { field: 'expireAt', title: '过期时间' },
+            { field: 'orderNo', title: '使用订单', formatter: function(v) { return $.common.escapeHtml(v); } }, { field: 'orderStatus', title: '订单状态', formatter: function(v) { return $.common.escapeHtml(v); } },
+            { field: 'usedAt', title: '锁券/使用时间' }, { field: 'issuedBy', title: '发放人', formatter: function(v) { return $.common.escapeHtml(v); } }, { field: 'createTime', title: '发放时间' }
+        ]
+    });
+});
+</script></body></html>

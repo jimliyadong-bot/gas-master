@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>扫码购买 · 消费者端</title>
+<link rel="stylesheet" href="assets/tailwind.css?v=h5-layout-2">
+<link rel="stylesheet" href="assets/vendor/fontawesome/css/all.min.css">
+<style>
+  .m-paybar {
+    width: calc(100% - 32px);
+    max-width: calc(var(--mobile-width) - 32px);
+    border-radius: 16px 16px 0 0;
+    box-shadow: 0 -4px 16px rgba(23, 32, 46, .08);
+  }
+</style>
+</head>
+<body data-shell="mobile" data-title="扫码购买" data-tabbar="c" class="m-page m-pay-page min-h-screen">
+
+<main class="px-4 pt-3 space-y-3">
+  <!-- 站点由支付二维码识别，消费者确认枪号 -->
+  <section class="relative overflow-hidden rounded-xl2 text-white shadow-card">
+    <!-- 图片来源：https://unsplash.com/photos/1519003722824-194d4455a60c （Unsplash，已下载到本地） -->
+    <img src="assets/img/truck.jpg" alt="" class="absolute inset-0 w-full h-full object-cover">
+    <div class="absolute inset-0 bg-gradient-to-r from-[#0F2C5C]/95 via-[#163F7C]/85 to-[#163F7C]/40"></div>
+    <div class="relative p-4">
+      <div class="flex items-center justify-between gap-2">
+        <h2 class="text-lg font-bold">高新区油气合建站</h2>
+        <button class="shrink-0 h-9 px-3 rounded-lg bg-white/15 hover:bg-white/25 text-xs font-semibold ring-1 ring-white/25" data-open="#memberCodeSheet"><i class="fa-solid fa-qrcode mr-1"></i>会员码</button>
+      </div>
+      <button class="mt-3 w-full flex items-center justify-between bg-white/12 hover:bg-white/20 ring-1 ring-white/25 rounded-xl px-3 py-2.5 transition" data-open="#gunSheet">
+        <span class="flex items-center gap-3">
+          <span class="w-10 h-10 rounded-lg bg-white text-brand-700 grid place-items-center font-black text-lg" id="gunNo">5</span>
+          <span class="text-left min-w-0"><span class="block whitespace-nowrap text-[13px] font-semibold"><span id="gunName">5 号枪</span> · <span id="gasName">LNG 液化天然气</span></span><span class="mt-1 inline-flex items-center gap-1 rounded-full bg-white/15 px-2 py-0.5 text-[10px] font-medium text-white"><i class="fa-solid fa-circle-check"></i>请确认加气枪号</span></span>
+        </span>
+        <span class="inline-flex shrink-0 items-center gap-1.5 h-9 px-2.5 rounded-lg bg-white text-brand-700 text-xs font-bold shadow-sm"><i class="fa-solid fa-repeat"></i>切换枪号</span>
+      </button>
+    </div>
+  </section>
+
+  <!-- 金额输入 -->
+  <section class="card p-4">
+    <div class="flex items-center justify-between">
+      <label for="amt" class="text-sm font-semibold">加气量</label>
+      <span class="text-xs text-ink-500">单价 ¥<b id="unitPrice" class="font-semibold text-ink-700">4.98</b>/<span id="priceUnit">Kg</span></span>
+    </div>
+    <div class="mt-2 flex items-baseline border-b-2 border-brand-500 pb-1">
+      <input id="amt" type="number" min="0" step="0.01" inputmode="decimal" value="40.16" class="flex-1 min-w-0 text-[34px] font-bold outline-none bg-transparent tracking-tight" aria-describedby="volHint">
+      <span id="quantityUnit" class="text-lg font-semibold text-ink-500 ml-2">Kg</span>
+      <button class="text-ink-300 hover:text-ink-500 w-8 h-8" aria-label="清空" id="clearAmt"><i class="fa-solid fa-circle-xmark"></i></button>
+    </div>
+    <p id="volHint" class="mt-2 text-sm text-ink-700">预计金额 <b class="text-brand-600 text-base" id="estimatedAmount">¥200.00</b> <span class="text-ink-500 text-xs" id="conversionHint"></span></p>
+    <div class="grid grid-cols-4 gap-2 mt-3" data-tabs id="quick">
+      <button class="h-10 rounded-lg ring-1 ring-ink-300 text-[11px] font-semibold hover:ring-brand-400 [&.on]:bg-brand-50 [&.on]:ring-brand-500 [&.on]:text-brand-600" data-v="20">20 Kg</button>
+      <button class="h-10 rounded-lg ring-1 ring-ink-300 text-[11px] font-semibold hover:ring-brand-400 [&.on]:bg-brand-50 [&.on]:ring-brand-500 [&.on]:text-brand-600" data-v="40">40 Kg</button>
+      <button class="h-10 rounded-lg ring-1 ring-ink-300 text-[11px] font-semibold hover:ring-brand-400 [&.on]:bg-brand-50 [&.on]:ring-brand-500 [&.on]:text-brand-600" data-v="60">60 Kg</button>
+      <button class="h-10 rounded-lg ring-1 ring-ink-300 text-[11px] font-semibold hover:ring-brand-400 [&.on]:bg-brand-50 [&.on]:ring-brand-500 [&.on]:text-brand-600" data-v="100">100 Kg</button>
+    </div>
+  </section>
+
+  <!-- 采购方优惠券 -->
+  <section class="card divide-y divide-ink-100">
+    <button class="w-full flex items-center justify-between px-4 h-12 text-sm" data-open="#couponSheet">
+      <span class="flex items-center gap-2"><span class="tag-warn">券</span><span id="couponName">满 200 减 10 元</span></span>
+      <span class="font-semibold text-money">-¥<span id="dCoupon">10.00</span> <i class="fa-solid fa-chevron-right text-[10px] text-ink-300 ml-1"></i></span>
+    </button>
+  </section>
+
+  <aside class="flex items-start gap-2.5 rounded-xl bg-brand-50 p-3 text-xs leading-5 text-brand-700" role="note">
+    <i class="fa-solid fa-circle-info mt-0.5 shrink-0 text-brand-600"></i>
+    <p><b class="block font-bold">支付成功后请向加气员出示订单</b><span>预计气量仅供参考，实际加气情况以加气员核销记录为准。</span></p>
+  </aside>
+</main>
+
+<!-- 底部支付栏 -->
+<div class="m-paybar fixed inset-x-0 mx-auto bg-white border-t border-ink-100 px-4 py-3 z-30">
+  <div class="flex items-center justify-between">
+    <div>
+      <div class="text-xs text-ink-500">实付 <span class="ml-1">优惠 ¥<span id="dTotal">10.00</span></span></div>
+      <div class="text-[26px] font-bold text-money leading-8">¥<span id="pay">190.00</span></div>
+    </div>
+    <button type="button" class="btn-primary btn-lg px-8" id="payBtn" data-open="#paymentSheet">立即支付</button>
+  </div>
+</div>
+
+<!-- 选择支付方式 -->
+<div class="sheet" id="paymentSheet" role="dialog" aria-label="选择支付方式">
+  <div class="flex items-center justify-between px-4 h-12 border-b border-ink-100"><b>选择支付方式</b><button data-close aria-label="关闭"><i class="fa-solid fa-xmark text-ink-500"></i></button></div>
+  <div class="p-4 pb-8">
+    <div class="text-sm text-ink-500 mb-3">拉卡拉聚合支付 · 实付 <b class="text-money">¥<span id="sheetPay">190.00</span></b></div>
+    <div class="card p-1" role="radiogroup" aria-label="支付方式">
+      <label class="flex items-center gap-3 px-3 h-14 rounded-lg cursor-pointer has-[:checked]:bg-brand-50/60">
+        <span class="w-9 h-9 rounded-xl bg-emerald-50 text-ok grid place-items-center"><i class="fa-brands fa-weixin text-xl"></i></span>
+        <span class="flex-1 text-sm font-semibold">微信支付</span>
+        <input type="radio" name="pay" value="wechat" class="accent-brand-500 w-4 h-4">
+      </label>
+      <label class="flex items-center gap-3 px-3 h-14 rounded-lg cursor-pointer has-[:checked]:bg-brand-50/60">
+        <span class="w-9 h-9 rounded-xl bg-brand-50 text-brand-600 grid place-items-center"><i class="fa-brands fa-alipay text-xl"></i></span>
+        <span class="flex-1 text-sm font-semibold">支付宝</span>
+        <input type="radio" name="pay" value="alipay" class="accent-brand-500 w-4 h-4">
+      </label>
+      <label class="flex items-center gap-3 px-3 h-14 rounded-lg cursor-pointer has-[:checked]:bg-brand-50/60">
+        <span class="w-9 h-9 rounded-xl bg-red-50 text-bad grid place-items-center"><i class="fa-solid fa-credit-card text-lg"></i></span>
+        <span class="flex-1 text-sm font-semibold">云闪付</span>
+        <input type="radio" name="pay" value="unionpay" class="accent-brand-500 w-4 h-4">
+      </label>
+    </div>
+    <button type="button" class="btn-primary btn-lg w-full mt-4" id="confirmPayment" disabled>确认支付</button>
+  </div>
+</div>
+
+<!-- 个人会员码 -->
+<div class="sheet" id="memberCodeSheet" role="dialog" aria-label="个人会员码">
+  <div class="flex items-center justify-between px-4 h-12 border-b border-ink-100"><b>个人会员码</b><button data-close aria-label="关闭"><i class="fa-solid fa-xmark text-ink-500"></i></button></div>
+  <div class="p-5 pb-8 text-center">
+    <div class="w-52 h-52 mx-auto p-3 rounded-xl bg-white ring-1 ring-ink-100" data-qr="1386621"></div>
+    <b class="block mt-3">会员 138****6621</b>
+    <p class="text-xs text-ink-500 mt-1">加气员扫码后录入枪号和金额，下单后请核对并确认支付</p>
+  </div>
+</div>
+
+<!-- 选择枪号 -->
+<div class="sheet" id="gunSheet" role="dialog" aria-label="选择枪号">
+  <div class="flex items-center justify-between px-4 h-12 border-b border-ink-100"><b>选择枪号</b><button data-close aria-label="关闭"><i class="fa-solid fa-xmark text-ink-500"></i></button></div>
+  <div class="grid grid-cols-3 gap-2.5 p-4 pb-8" id="guns"></div>
+</div>
+
+<!-- 选择优惠券 -->
+<div class="sheet" id="couponSheet" role="dialog" aria-label="选择优惠券">
+  <div class="flex items-center justify-between px-4 h-12 border-b border-ink-100"><b>选择优惠券</b><button data-close aria-label="关闭"><i class="fa-solid fa-xmark text-ink-500"></i></button></div>
+  <div class="p-4 pb-8 space-y-2.5" id="coupons"></div>
+</div>
+
+<script src="assets/js/common.js?v=h5-layout-2"></script>
+<script src="assets/js/gas-store.js?v=staff-flow-1"></script>
+<script>
+  const GUNS = GasStore.guns.map(item => ({ ...item, no: Number(item.no) }));
+  const COUPONS = [
+    { id: 1, name: '满 200 减 10 元', min: 200, off: 10, exp: '2026-11-30 到期', scope: '全部合作站' },
+    { id: 2, name: '满 300 减 18 元', min: 300, off: 18, exp: '2026-12-15 到期', scope: '本站可用' },
+    { id: 3, name: 'LNG 专享 满 500 减 30', min: 500, off: 30, exp: '2026-12-31 到期', scope: '仅 LNG', gas: 'LNG' },
+    { id: 0, name: '不使用优惠券', min: 0, off: 0 }
+  ];
+  const QUICK_AMOUNTS = {
+    CNG: [30, 40, 50, 60],
+    LNG: [20, 40, 60, 100]
+  };
+  let gun = GUNS[4], coupon = COUPONS[0], manualNone = false;
+  const cpOk = (c, a) => !c.id || (a >= c.min && (!c.gas || c.gas === gun.gas));
+  const cpWhy = (c, a) => c.gas && c.gas !== gun.gas ? '当前气种不可用' : '还差 ¥' + (c.min - a).toFixed(2) + ' 可用';
+  const totalForQuantity = (quantity, selectedGun = gun) =>
+    Math.round(quantity * selectedGun.price * 100) / 100;
+  const quantityForTotal = (total, selectedGun) =>
+    total / selectedGun.price;
+  function pickBest(a) {
+    if (manualNone) return;
+    if (coupon.id && cpOk(coupon, a) && coupon.off >= Math.max(...COUPONS.filter(c => c.id && cpOk(c, a)).map(c => c.off))) return;
+    coupon = COUPONS.filter(c => c.id && cpOk(c, a)).sort((x, y) => y.off - x.off)[0] || COUPONS.find(c => !c.id);
+  }
+
+  function calc() {
+    const quantity = Math.max(parseFloat($('#amt').value) || 0, 0);
+    const amount = totalForQuantity(quantity);
+    pickBest(amount); renderCoupons();
+    const cp = (coupon.id && amount >= coupon.min && (!coupon.gas || coupon.gas === gun.gas)) ? coupon.off : 0;
+    $('#quantityUnit').textContent = gun.gas === 'CNG' ? 'm³' : 'Kg';
+    $('#priceUnit').textContent = gun.gas === 'CNG' ? 'm³' : 'Kg';
+    $('#estimatedAmount').textContent = '¥' + amount.toFixed(2);
+    $('#conversionHint').textContent = '';
+    $('#dCoupon').textContent = cp.toFixed(2);
+    $('#couponName').textContent = cp ? coupon.name : (coupon.id ? coupon.name + '（未满足条件）' : '不使用优惠券');
+    $('#dTotal').textContent = cp.toFixed(2);
+    $('#pay').textContent = Math.max(amount - cp, 0).toFixed(2);
+    $('#sheetPay').textContent = Math.max(amount - cp, 0).toFixed(2);
+    $('#payBtn').classList.toggle('is-disabled', amount < 10);
+    $('#payBtn').textContent = '立即支付';
+    $$('#quick button').forEach(b => b.classList.toggle('on', Number(b.dataset.v) === quantity));
+  }
+  function setGun(g) {
+    const currentAmount = totalForQuantity(parseFloat($('#amt').value) || 0);
+    gun = g;
+    const nextQuantity = quantityForTotal(currentAmount, gun);
+    $('#amt').value = gun.gas === 'CNG' ? nextQuantity.toFixed(3) : nextQuantity.toFixed(2);
+    $('#amt').step = gun.gas === 'CNG' ? '0.001' : '0.01';
+    $('#gunNo').textContent = g.no; $('#gunName').textContent = g.no + ' 号枪';
+    $('#gasName').textContent = g.gas === 'CNG' ? 'CNG 压缩天然气' : 'LNG 液化天然气';
+    $('#unitPrice').textContent = g.price.toFixed(2);
+    renderGuns(); renderQuickAmounts(); calc();
+  }
+  function renderQuickAmounts() {
+    const options = QUICK_AMOUNTS[gun.gas];
+    const unit = gun.gas === 'CNG' ? 'm³' : 'Kg';
+    $$('#quick button').forEach((button, index) => {
+      button.dataset.v = options[index];
+      button.textContent = fmt(options[index]) + ' ' + unit;
+    });
+  }
+  function renderGuns() {
+    $('#guns').innerHTML = GUNS.map(g => `<button class="h-16 rounded-xl ring-1 ${g === gun ? 'ring-2 ring-brand-500 bg-brand-50' : 'ring-ink-300'} flex flex-col items-center justify-center" data-gun="${g.no}"><b class="text-lg">${g.no} 号枪</b><span class="${g.gas === 'CNG' ? 'tag-cng' : 'tag-lng'} mt-0.5">${g.gas} ¥${g.price.toFixed(2)}</span></button>`).join('');
+  }
+  function renderCoupons() {
+    const a = totalForQuantity(Math.max(parseFloat($('#amt').value) || 0, 0));
+    $('#coupons').innerHTML = COUPONS.map(c => c.id ? `<button class="w-full flex items-stretch rounded-xl overflow-hidden ring-1 ${c === coupon ? 'ring-2 ring-money' : 'ring-ink-100'} ${cpOk(c, a) ? '' : 'opacity-40 grayscale pointer-events-none'}" data-cp="${c.id}" ${cpOk(c, a) ? '' : 'disabled'}>
+        <span class="w-24 bg-gradient-to-br from-[#FF8A4C] to-money text-white flex flex-col items-center justify-center"><b class="text-2xl">¥${c.off}</b><span class="text-[10px]">满 ${c.min} 可用</span></span>
+        <span class="flex-1 text-left px-3 py-2.5 bg-[#FFF8F4]"><b class="text-sm block">${c.name}</b><span class="text-[11px] text-ink-500 block mt-1">${c.scope} · ${c.exp}</span>${cpOk(c, a) ? '' : `<span class="text-[11px] text-bad block mt-0.5">${cpWhy(c, a)}</span>`}</span></button>`
+      : `<button class="w-full h-11 rounded-xl ring-1 ring-ink-100 text-sm text-ink-700" data-cp="0">不使用优惠券</button>`).join('');
+  }
+  document.addEventListener('click', e => {
+    const q = e.target.closest('#quick button'); if (q) { $('#amt').value = q.dataset.v; calc(); }
+    const g = e.target.closest('[data-gun]'); if (g) { setGun(GUNS.find(x => x.no == g.dataset.gun)); closeLayers(); }
+    const c = e.target.closest('[data-cp]'); if (c) { coupon = COUPONS.find(x => x.id == c.dataset.cp); manualNone = !coupon.id; calc(); closeLayers(); }
+  });
+  $('#clearAmt').onclick = () => { $('#amt').value = ''; $('#amt').focus(); calc(); };
+  $('#amt').addEventListener('input', calc);
+  document.addEventListener('change', e => {
+    if (e.target.matches('input[name="pay"]')) $('#confirmPayment').disabled = false;
+  });
+  $('#confirmPayment').addEventListener('click', () => GasStore.run(() => {
+    const selected = $('input[name="pay"]:checked');
+    if (!selected) return toast('请选择支付方式');
+    const quantity = Number($('#amt').value);
+    if (!Number.isFinite(quantity) || quantity <= 0) return toast('请输入有效的加气量');
+    const amount = totalForQuantity(quantity);
+    if (amount < 10) return toast('订单金额至少为 10 元');
+    const discount = cpOk(coupon, amount) ? coupon.off : 0;
+    const labels = { wechat: '微信支付', alipay: '支付宝', unionpay: '云闪付' };
+    const order = GasStore.createPaid({ gun: gun.no, amount: amount - discount, volume: quantity, paymentMethod: labels[selected.value] + ' · 拉卡拉' });
+    $('#confirmPayment').disabled = true;
+    location.href = 'c-order.html?order=' + encodeURIComponent(order.id);
+  }));
+  renderGuns(); calc();
+</script>
+</body>
+</html>

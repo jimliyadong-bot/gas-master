@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>加气站批量采购系统 · 角色选择</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="assets/tailwind.css">
+<link rel="stylesheet" href="assets/vendor/fontawesome/css/all.min.css">
+<style>
+  body { min-height: 100vh; display: flex; flex-direction: column; background: #0B1424; color: #fff; }
+  .portal-bg { position: fixed; inset: 0; pointer-events: none; background: linear-gradient(110deg, #0B1424 10%, rgba(15,44,92,.94) 60%, rgba(11,20,36,.85)), url("assets/img/truck.jpg") center / cover; }
+  .portal-bg::after { content: ""; position: absolute; inset: 0; background-image: linear-gradient(rgba(255,255,255,.025) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.025) 1px, transparent 1px); background-size: 40px 40px; }
+  .portal-nav, .portal-main, .portal-footer { position: relative; width: min(1200px, 100%); margin: 0 auto; padding-left: 32px; padding-right: 32px; }
+  .portal-nav { min-height: 80px; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+  .portal-main { flex: 1; display: flex; flex-direction: column; justify-content: center; padding-top: 40px; padding-bottom: 64px; }
+  .role-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 20px; margin-top: 44px; }
+  .role-card { --accent: #2A78D6; --tint: #EEF5FF; display: flex; flex-direction: column; min-width: 0; padding: 28px 24px; border: 1px solid rgba(255,255,255,.5); border-radius: 20px; background: #fff; color: #17202E; box-shadow: 0 16px 40px rgba(0,0,0,.12); transition: transform .2s, box-shadow .2s; }
+  .role-card:hover { transform: translateY(-6px); box-shadow: 0 24px 48px rgba(0,0,0,.22); }
+  .role-icon { display: grid; place-items: center; width: 52px; height: 52px; border-radius: 16px; background: var(--tint); color: var(--accent); font-size: 22px; }
+  .role-card h2 { margin-top: 24px; font-size: 21px; font-weight: 700; }
+  .role-card p { margin-top: 10px; margin-bottom: 28px; color: #667085; font-size: 13px; line-height: 1.8; flex: 1; }
+  .role-enter { display: flex; justify-content: space-between; align-items: center; padding-top: 18px; border-top: 1px solid #EEF1F5; color: var(--accent); font-size: 13px; font-weight: 600; }
+  .portal-footer { padding-bottom: 24px; color: #A0AEC0; font-size: 12px; }
+  @media (max-width: 1000px) { .role-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (max-width: 540px) {
+    .portal-nav, .portal-main, .portal-footer { padding-left: 20px; padding-right: 20px; }
+    .portal-nav { min-height: 72px; }
+    .portal-main { padding-top: 24px; padding-bottom: 36px; }
+    .role-grid { gap: 12px; margin-top: 28px; }
+    .role-card { padding: 20px 16px; border-radius: 16px; }
+    .role-card h2 { font-size: 18px; margin-top: 16px; }
+    .role-card p { font-size: 12px; margin-bottom: 20px; }
+  }
+  @media (prefers-reduced-motion: reduce) { .role-card { transition: none; } }
+</style>
+</head>
+<body>
+<div class="portal-bg" aria-hidden="true"></div>
+<nav class="portal-nav" aria-label="入口导航">
+  <a href="index.html" class="flex items-center gap-2.5 font-bold">
+    <span class="w-8 h-8 rounded-lg bg-gradient-to-br from-brand-400 to-gas-cng grid place-items-center"><i class="fa-solid fa-fire-flame-simple text-sm" aria-hidden="true"></i></span>
+    <span>加气站批量采购系统</span>
+  </a>
+  <a href="overview.html" class="text-sm text-white/80 hover:text-white transition">项目说明 <i class="fa-solid fa-arrow-up-right-from-square text-xs ml-1" aria-hidden="true"></i></a>
+</nav>
+<main class="portal-main">
+  <div class="text-xs font-semibold text-brand-300 tracking-widest">欢迎使用</div>
+  <h1 class="text-3xl sm:text-4xl font-bold mt-4 tracking-tight">批量采购、销售与库存管理</h1>
+  <p class="text-sm text-white/70 mt-4 leading-7">面向采购方及管理员管理采购资源、库存和加气业务。</p>
+  <section class="role-grid" aria-label="选择访问角色">
+    <a class="role-card" href="c-pay.html">
+      <span class="role-icon"><i class="fa-solid fa-user" aria-hidden="true"></i></span>
+      <h2>消费者</h2>
+      <p>扫码下单、预计气量<br>使用采购方优惠券并支付</p>
+      <span class="role-enter">进入扫码加气 <i class="fa-solid fa-arrow-right" aria-hidden="true"></i></span>
+    </a>
+    <a class="role-card" href="s-workbench.html" style="--accent:#0E9F7E;--tint:#E3F6F0">
+      <span class="role-icon"><i class="fa-solid fa-gas-pump" aria-hidden="true"></i></span>
+      <h2>加气员</h2>
+      <p>查看待加气订单<br>确认核销并登记实际气量</p>
+      <span class="role-enter">进入加气工作台 <i class="fa-solid fa-arrow-right" aria-hidden="true"></i></span>
+    </a>
+    <a class="role-card" href="m-stations.html" style="--accent:#E8501F;--tint:#FFF4ED">
+      <span class="role-icon"><i class="fa-solid fa-chart-line" aria-hidden="true"></i></span>
+      <h2>管理员</h2>
+      <p>维护采购商、登记采购<br>管理库存、查看进出气</p>
+      <span class="role-enter">进入管理员端 <i class="fa-solid fa-arrow-right" aria-hidden="true"></i></span>
+    </a>
+    <a class="role-card" href="a-dashboard.html" style="--accent:#5B4BD6;--tint:#ECEAFD">
+      <span class="role-icon"><i class="fa-solid fa-desktop" aria-hidden="true"></i></span>
+      <h2>采购方管理后台</h2>
+      <p>采购登记、库存预警<br>订单、优惠券及对账记录</p>
+      <span class="role-enter">进入采购工作台 <i class="fa-solid fa-arrow-right" aria-hidden="true"></i></span>
+    </a>
+  </section>
+</main>
+<footer class="portal-footer">交互原型 · 支付二维码和数据均为演示内容</footer>
+</body>
+</html>

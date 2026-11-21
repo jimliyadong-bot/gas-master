@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org">
+<head><th:block th:include="include :: header('定向发券')" /></head>
+<body class="white-bg"><div class="wrapper wrapper-content animated fadeInRight ibox-content">
+<form class="form-horizontal m" id="form-coupon-grant">
+    <input type="hidden" name="templateId" th:value="${template.templateId}"/>
+    <div class="form-group"><label class="col-sm-3 control-label">券模板：</label><div class="col-sm-8"><p class="form-control-static" th:text="|${template.name} / 面额${template.faceValue}元|"></p></div></div>
+    <div class="form-group"><label class="col-sm-3 control-label">已发/总量：</label><div class="col-sm-8"><p class="form-control-static" th:text="|${template.issuedQty} / ${template.totalQty}|"></p></div></div>
+    <div class="form-group"><label class="col-sm-3 control-label">会员手机号：</label><div class="col-sm-8"><input class="form-control" name="phone" id="phone" maxlength="20" placeholder="与会员ID二选一"/></div></div>
+    <div class="form-group"><label class="col-sm-3 control-label">会员ID：</label><div class="col-sm-8"><input class="form-control" type="number" min="1" name="memberId" id="memberId" placeholder="与手机号二选一"/></div></div>
+    <div class="form-group"><div class="col-sm-offset-3 col-sm-8"><span class="help-block">同一会员可多次发放，受模板总量限制；操作记录不保存手机号明文。</span></div></div>
+</form>
+</div><th:block th:include="include :: footer" />
+<script>
+var prefix = ctx + 'gas/coupon';
+function submitHandler() {
+    if (!$('#phone').val().trim() && !$('#memberId').val()) { $.modal.alertWarning('请填写会员手机号或会员ID'); return; }
+    if ($.validate.form()) $.operate.save(prefix + '/grant', $('#form-coupon-grant').serialize());
+}
+</script></body></html>

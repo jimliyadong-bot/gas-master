@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org" xmlns:shiro="http://www.pollix.at/thymeleaf/shiro">
+<head><th:block th:include="include :: header('班次记录')" /></head>
+<body class="gray-bg">
+<div class="container-div"><div class="row">
+    <div class="col-sm-12 search-collapse">
+        <form id="shift-form"><div class="select-list"><ul>
+            <li>加气员：<input type="text" name="staffName" class="form-control" /></li>
+            <li>班次状态：<select name="shiftStatus"><option value="">全部</option><option value="ACTIVE">当班中</option><option value="ENDED">已交班</option></select></li>
+            <li><a class="btn btn-primary btn-rounded btn-sm" onclick="$.table.search()"><i class="fa fa-search"></i> 搜索</a>
+                <a class="btn btn-warning btn-rounded btn-sm" onclick="$.form.reset()"><i class="fa fa-refresh"></i> 重置</a></li>
+        </ul></div></form>
+    </div>
+    <div class="col-sm-12 select-table table-striped"><table id="bootstrap-table"></table></div>
+</div></div>
+<th:block th:include="include :: footer" />
+<script th:inline="javascript">
+var forceFlag = [[${@permission.hasPermi('gas:shift:force')}]];
+$(function() {
+    $.table.init({
+        url: ctx + 'gas/shift/list', modalName: '班次',
+        columns: [
+            { field: 'stationName', title: '站点' },
+            { field: 'staffName', title: '加气员' },
+            { field: 'startedAt', title: '开始当班' },
+            { field: 'endedAt', title: '交班时间', formatter: function(v) { return v || '<span class="label label-success">当班中</span>'; } },
+            { field: 'proxyCount', title: '代下单数', align: 'right' },
+            { field: 'redeemCount', title: '核销数', align: 'right' },
+            { field: 'cngVolume', title: 'CNG(m³)', align: 'right' },
+            { field: 'lngVolume', title: 'LNG(kg)', align: 'right' },
+            { field: 'payAmount', title: '核销金额', align: 'right' },
+            { field: 'endedBy', title: '交班操作人' },
+            { field: 'endReason', title: '强制交班原因' },
+            { title: '操作', align: 'center', formatter: function(v, row) {
+                return row.activeFlag === 1 ? '<a class="btn btn-danger btn-xs ' + forceFlag + '" href="javascript:void(0)" onclick="$.modal.open(\'强制交班\', ctx + \'gas/shift/force/\' + ' + row.shiftId + ')"><i class="fa fa-sign-out"></i>强制交班</a>' : '';
+            } }
+        ]
+    });
+});
+</script>
+</body></html>

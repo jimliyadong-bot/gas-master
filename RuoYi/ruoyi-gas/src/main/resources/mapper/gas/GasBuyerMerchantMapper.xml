@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.gas.mapper.GasBuyerMerchantMapper">
+
+	<resultMap type="GasBuyerMerchant" id="GasBuyerMerchantResult">
+		<id     property="merchantId" column="merchant_id" />
+		<result property="buyerId"    column="buyer_id"    />
+		<result property="channel"    column="channel"     />
+		<result property="payMode"    column="pay_mode"    />
+		<result property="merchantNo" column="merchant_no" />
+		<result property="termNo"     column="term_no"     />
+		<result property="appId"      column="app_id"      />
+		<result property="secretRef"  column="secret_ref"  />
+		<result property="status"     column="status"      />
+		<result property="createBy"   column="create_by"   />
+		<result property="createTime" column="create_time" />
+		<result property="updateBy"   column="update_by"   />
+		<result property="updateTime" column="update_time" />
+		<result property="remark"     column="remark"      />
+	</resultMap>
+
+	<sql id="selectMerchantVo">
+        select merchant_id, buyer_id, channel, pay_mode, merchant_no, term_no, app_id, secret_ref,
+               status, create_by, create_time, update_by, update_time, remark
+        from gas_buyer_merchant
+    </sql>
+
+	<select id="selectMerchantList" parameterType="GasBuyerMerchant" resultMap="GasBuyerMerchantResult">
+		<include refid="selectMerchantVo"/>
+		<where>
+			<if test="buyerId != null and buyerId != 0">
+				AND buyer_id = #{buyerId}
+			</if>
+			<if test="merchantNo != null and merchantNo != ''">
+				AND merchant_no like concat('%', #{merchantNo}, '%')
+			</if>
+			<if test="status != null and status != ''">
+				AND status = #{status}
+			</if>
+		</where>
+		order by merchant_id
+	</select>
+
+	<select id="selectMerchantByBuyerId" parameterType="Long" resultMap="GasBuyerMerchantResult">
+		<include refid="selectMerchantVo"/>
+		where buyer_id = #{buyerId} and channel = 'LAKALA' limit 1
+	</select>
+
+	<select id="checkMerchantNoUnique" parameterType="GasBuyerMerchant" resultMap="GasBuyerMerchantResult">
+		<include refid="selectMerchantVo"/>
+		where channel = #{channel} and merchant_no = #{merchantNo}
+		<if test="merchantId != null and merchantId != 0">
+			and merchant_id != #{merchantId}
+		</if>
+		limit 1
+	</select>
+
+	<insert id="insertMerchant" parameterType="GasBuyerMerchant" useGeneratedKeys="true" keyProperty="merchantId">
+		insert into gas_buyer_merchant(
+			<if test="buyerId != null and buyerId != 0">buyer_id,</if>
+			<if test="channel != null and channel != ''">channel,</if>
+			pay_mode,
+			<if test="merchantNo != null and merchantNo != ''">merchant_no,</if>
+			<if test="termNo != null">term_no,</if>
+			<if test="appId != null">app_id,</if>
+			<if test="secretRef != null">secret_ref,</if>
+			<if test="status != null and status != ''">status,</if>
+			<if test="remark != null">remark,</if>
+			<if test="createBy != null and createBy != ''">create_by,</if>
+			create_time
+		)values(
+			<if test="buyerId != null and buyerId != 0">#{buyerId},</if>
+			<if test="channel != null and channel != ''">#{channel},</if>
+			#{payMode},
+			<if test="merchantNo != null and merchantNo != ''">#{merchantNo},</if>
+			<if test="termNo != null">#{termNo},</if>
+			<if test="appId != null">#{appId},</if>
+			<if test="secretRef != null">#{secretRef},</if>
+			<if test="status != null and status != ''">#{status},</if>
+			<if test="remark != null">#{remark},</if>
+			<if test="createBy != null and createBy != ''">#{createBy},</if>
+			sysdate()
+		)
+	</insert>
+
+	<update id="updateMerchant" parameterType="GasBuyerMerchant">
+		update gas_buyer_merchant
+		<set>
+			<if test="payMode != null">pay_mode = #{payMode},</if>
+			<if test="merchantNo != null and merchantNo != ''">merchant_no = #{merchantNo},</if>
+			<if test="termNo != null">term_no = #{termNo},</if>
+			<if test="appId != null">app_id = #{appId},</if>
+			<if test="secretRef != null">secret_ref = #{secretRef},</if>
+			<if test="status != null and status != ''">status = #{status},</if>
+			<if test="remark != null">remark = #{remark},</if>
+			<if test="updateBy != null and updateBy != ''">update_by = #{updateBy},</if>
+			update_time = sysdate()
+		</set>
+		where merchant_id = #{merchantId}
+	</update>
+
+	<delete id="deleteMerchantByBuyerIds" parameterType="Long">
+		delete from gas_buyer_merchant where buyer_id in
+		<foreach collection="array" item="buyerId" open="(" separator="," close=")">
+			#{buyerId}
+		</foreach>
+	</delete>
+
+</mapper>

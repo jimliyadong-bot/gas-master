@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org" xmlns:shiro="http://www.pollix.at/thymeleaf/shiro">
+<head>
+	<th:block th:include="include :: header('业务参数列表')" />
+</head>
+<body class="gray-bg">
+	<div class="container-div">
+		<div class="row">
+			<div class="col-sm-12 search-collapse">
+				<form id="config-form">
+					<div class="select-list">
+						<ul>
+							<li>
+								参数键：<input type="text" name="configKey"/>
+							</li>
+							<li>
+								参数值：<input type="text" name="configValue"/>
+							</li>
+							<li>
+								<a class="btn btn-primary btn-rounded btn-sm" onclick="$.table.search()"><i class="fa fa-search"></i>&nbsp;搜索</a>
+								<a class="btn btn-warning btn-rounded btn-sm" onclick="$.form.reset()"><i class="fa fa-refresh"></i>&nbsp;重置</a>
+							</li>
+						</ul>
+					</div>
+				</form>
+			</div>
+
+			<div class="btn-group-sm" id="toolbar" role="group">
+				<a class="btn btn-success" onclick="$.operate.add()" shiro:hasPermission="gas:config:add">
+					<i class="fa fa-plus"></i> 新增
+				</a>
+				<a class="btn btn-primary single disabled" onclick="$.operate.edit()" shiro:hasPermission="gas:config:edit">
+					<i class="fa fa-edit"></i> 修改
+				</a>
+				<a class="btn btn-danger multiple disabled" onclick="$.operate.removeAll()" shiro:hasPermission="gas:config:remove">
+					<i class="fa fa-remove"></i> 删除
+				</a>
+			</div>
+
+			<div class="col-sm-12 select-table table-striped">
+				<table id="bootstrap-table"></table>
+			</div>
+		</div>
+	</div>
+	<th:block th:include="include :: footer" />
+	<script th:inline="javascript">
+		var editFlag = [[${@permission.hasPermi('gas:config:edit')}]];
+		var removeFlag = [[${@permission.hasPermi('gas:config:remove')}]];
+		var prefix = ctx + "gas/config";
+
+		$(function() {
+			var options = {
+				url: prefix + "/list",
+				createUrl: prefix + "/add",
+				updateUrl: prefix + "/edit/{id}",
+				removeUrl: prefix + "/remove",
+				modalName: "业务参数",
+				id: "configKey",
+				onClickRow: function(row) {
+					var tableId = $.common.isEmpty($.table._option.id) ? "bootstrap-table" : $.table._option.id;
+					$("#" + tableId).bootstrapTable("uncheckAll");
+					$("#" + tableId).bootstrapTable("checkBy", { field: $.table._option.id, values: [row[$.table._option.id]] });
+				},
+				columns: [{
+					checkbox: true,
+					formatter: function(value, row, index) {
+						return '<input type="checkbox" name="btTableSelect" data-index="' + index + '" value="' + $.common.escapeHtml(row.configKey) + '">';
+					}
+				},
+				{
+					field: 'configKey',
+					title: '参数键'
+				},
+				{
+					field: 'configValue',
+					title: '参数值'
+				},
+				{
+					field: 'remark',
+					title: '说明'
+				},
+				{
+					field: 'updateBy',
+					title: '更新者'
+				},
+				{
+					field: 'updateTime',
+					title: '更新时间'
+				},
+				{
+					title: '操作',
+					align: 'center',
+					formatter: function(value, row, index) {
+						var actions = [];
+						actions.push('<a class="btn btn-success btn-xs config-edit ' + editFlag + '" data-key="' + $.common.escapeHtml(row.configKey) + '" href="javascript:void(0)"><i class="fa fa-edit"></i>编辑</a> ');
+						actions.push('<a class="btn btn-danger btn-xs config-remove ' + removeFlag + '" data-key="' + $.common.escapeHtml(row.configKey) + '" href="javascript:void(0)"><i class="fa fa-remove"></i>删除</a>');
+						return actions.join('');
+					}
+				}]
+			};
+			$.table.init(options);
+			$(document).on('click', '.config-edit', function() { $.operate.edit($(this).data('key')); });
+			$(document).on('click', '.config-remove', function() { $.operate.remove($(this).data('key')); });
+		});
+	</script>
+</body>
+</html>

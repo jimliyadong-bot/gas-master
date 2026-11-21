@@ -1,0 +1,169 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.gas.mapper.GasPurchaseBatchMapper">
+
+	<resultMap type="GasPurchaseBatch" id="GasPurchaseBatchResult">
+		<id     property="batchId"       column="batch_id"       />
+		<result property="batchNo"       column="batch_no"       />
+		<result property="buyerId"       column="buyer_id"       />
+		<result property="stationId"     column="station_id"     />
+		<result property="gasType"       column="gas_type"       />
+		<result property="purchaseDate"  column="purchase_date"  />
+		<result property="qty"           column="qty"            />
+		<result property="unitPrice"     column="unit_price"     />
+		<result property="amount"        column="amount"         />
+		<result property="payStatus"     column="pay_status"     />
+		<result property="invoiceStatus" column="invoice_status" />
+		<result property="invoiceNo"     column="invoice_no"     />
+		<result property="invoicedAt"    column="invoiced_at"    />
+		<result property="version"       column="version"        />
+		<result property="createBy"      column="create_by"      />
+		<result property="createTime"    column="create_time"    />
+		<result property="updateBy"      column="update_by"      />
+		<result property="updateTime"    column="update_time"    />
+		<result property="remark"        column="remark"         />
+		<result property="stationCode"   column="station_code"   />
+		<result property="stationName"   column="station_name"   />
+		<result property="buyerName"     column="buyer_name"     />
+		<result property="receivedQty"   column="received_qty"   />
+		<result property="paidAmount"    column="paid_amount"    />
+	</resultMap>
+
+	<sql id="selectBatchVo">
+        select b.batch_id, b.batch_no, b.buyer_id, b.station_id, b.gas_type, b.purchase_date, b.qty, b.unit_price,
+               b.amount, b.pay_status, b.invoice_status, b.invoice_no, b.invoiced_at, b.version,
+               b.create_by, b.create_time, b.update_by, b.update_time, b.remark,
+               s.station_code, s.station_name, bu.buyer_name,
+               (select ifnull(sum(r.qty), 0) from gas_purchase_receipt r where r.batch_id = b.batch_id) as received_qty,
+               (select ifnull(sum(p.amount), 0) from gas_purchase_payment p where p.batch_id = b.batch_id) as paid_amount
+        from gas_purchase_batch b
+        left join gas_station s on b.station_id = s.station_id
+        left join gas_buyer bu on b.buyer_id = bu.buyer_id
+    </sql>
+
+	<select id="selectBatchList" parameterType="GasPurchaseBatch" resultMap="GasPurchaseBatchResult">
+		select b.batch_id, b.batch_no, b.buyer_id, b.station_id, b.gas_type, b.purchase_date, b.qty, b.unit_price,
+		       b.amount, b.pay_status, b.invoice_status, b.invoice_no, b.invoiced_at, b.version,
+		       b.create_by, b.create_time, b.update_by, b.update_time, b.remark,
+		       s.station_code, s.station_name, bu.buyer_name,
+		       ifnull(r.received_qty, 0) as received_qty,
+		       ifnull(p.paid_amount, 0) as paid_amount
+		from gas_purchase_batch b
+		left join gas_station s on b.station_id = s.station_id
+		left join gas_buyer bu on b.buyer_id = bu.buyer_id
+		left join (select batch_id, sum(qty) as received_qty from gas_purchase_receipt group by batch_id) r on r.batch_id = b.batch_id
+		left join (select batch_id, sum(amount) as paid_amount from gas_purchase_payment group by batch_id) p on p.batch_id = b.batch_id
+		<where>
+			<if test="batchNo != null and batchNo != ''">
+				AND b.batch_no like concat('%', #{batchNo}, '%')
+			</if>
+			<if test="buyerId != null and buyerId != 0">
+				AND b.buyer_id = #{buyerId}
+			</if>
+			<if test="stationId != null and stationId != 0">
+				AND b.station_id = #{stationId}
+			</if>
+			<if test="gasType != null and gasType != ''">
+				AND b.gas_type = #{gasType}
+			</if>
+			<if test="payStatus != null and payStatus != ''">
+				AND b.pay_status = #{payStatus}
+			</if>
+			<if test="invoiceStatus != null and invoiceStatus != ''">
+				AND b.invoice_status = #{invoiceStatus}
+			</if>
+			<if test="params.beginDate != null and params.beginDate != ''">
+				AND b.purchase_date &gt;= #{params.beginDate}
+			</if>
+			<if test="params.endDate != null and params.endDate != ''">
+				AND b.purchase_date &lt;= #{params.endDate}
+			</if>
+		</where>
+		order by b.purchase_date desc, b.batch_id desc
+	</select>
+
+	<select id="selectBatchById" parameterType="Long" resultMap="GasPurchaseBatchResult">
+		<include refid="selectBatchVo"/>
+		where b.batch_id = #{batchId}
+	</select>
+
+	<select id="selectBatchByIdForUpdate" parameterType="Long" resultMap="GasPurchaseBatchResult">
+		select batch_id, batch_no, buyer_id, station_id, gas_type, purchase_date, qty, unit_price,
+		       amount, pay_status, invoice_status, invoice_no, invoiced_at, version,
+		       create_by, create_time, update_by, update_time, remark
+		from gas_purchase_batch
+		where batch_id = #{batchId} for update
+	</select>
+
+	<select id="checkBatchNoUnique" parameterType="String" resultMap="GasPurchaseBatchResult">
+		select batch_id, batch_no from gas_purchase_batch where batch_no = #{batchNo} limit 1
+	</select>
+
+	<insert id="insertBatch" parameterType="GasPurchaseBatch" useGeneratedKeys="true" keyProperty="batchId">
+		insert into gas_purchase_batch(
+			batch_no, buyer_id, station_id, gas_type, purchase_date, qty, unit_price, amount,
+			pay_status, invoice_status,
+			<if test="remark != null">remark,</if>
+			<if test="createBy != null and createBy != ''">create_by,</if>
+			create_time
+		)values(
+			#{batchNo}, #{buyerId}, #{stationId}, #{gasType}, #{purchaseDate}, #{qty}, #{unitPrice}, #{amount},
+			'UNPAID', 'UNINVOICED',
+			<if test="remark != null">#{remark},</if>
+			<if test="createBy != null and createBy != ''">#{createBy},</if>
+			sysdate()
+		)
+	</insert>
+
+	<update id="updateBatch" parameterType="GasPurchaseBatch">
+		update gas_purchase_batch
+		<set>
+			<if test="batchNo != null and batchNo != ''">batch_no = #{batchNo},</if>
+			<if test="stationId != null and stationId != 0">station_id = #{stationId},</if>
+			<if test="buyerId != null and buyerId != 0">buyer_id = #{buyerId},</if>
+			<if test="gasType != null and gasType != ''">gas_type = #{gasType},</if>
+			<if test="purchaseDate != null">purchase_date = #{purchaseDate},</if>
+			<if test="qty != null">qty = #{qty},</if>
+			<if test="unitPrice != null">unit_price = #{unitPrice},</if>
+			<if test="amount != null">amount = #{amount},</if>
+			<if test="remark != null">remark = #{remark},</if>
+			<if test="updateBy != null and updateBy != ''">update_by = #{updateBy},</if>
+			update_time = sysdate(),
+			version = version + 1
+		</set>
+		where batch_id = #{batchId} and version = #{version}
+	</update>
+
+	<update id="updateBatchInvoice">
+		update gas_purchase_batch
+		set invoice_status = #{invoiceStatus},
+		    invoice_no = #{invoiceNo},
+		    invoiced_at = if(#{invoiceStatus} = 'INVOICED', sysdate(), null),
+		    version = version + 1,
+		    update_time = sysdate()
+		where batch_id = #{batchId}
+	</update>
+
+	<update id="updateBatchPayStatus">
+		update gas_purchase_batch
+		set pay_status = #{payStatus}, version = version + 1, update_time = sysdate()
+		where batch_id = #{batchId}
+	</update>
+
+	<delete id="deleteBatchByIds" parameterType="Long">
+		delete from gas_purchase_batch where batch_id in
+		<foreach collection="array" item="batchId" open="(" separator="," close=")">
+			#{batchId}
+		</foreach>
+	</delete>
+
+	<select id="countReceiptByBatchIds" parameterType="Long" resultType="int">
+		select count(1) from gas_purchase_receipt where batch_id in
+		<foreach collection="array" item="batchId" open="(" separator="," close=")">
+			#{batchId}
+		</foreach>
+	</select>
+
+</mapper>

@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>库存看板 · 管理员</title>
+<link rel="stylesheet" href="assets/tailwind.css?v=h5-layout-2">
+<link rel="stylesheet" href="assets/vendor/fontawesome/css/all.min.css">
+<style>
+  .wholesale-page [hidden] { display: none !important; }
+  .wholesale-tabs > button { flex: 1; }
+
+  /* 库存看板 */
+  .board-hero { padding: 18px; border-radius: 18px; background: linear-gradient(120deg, #173b69, #2a78d6); color: #fff; box-shadow: 0 12px 28px rgba(23,59,105,.28); }
+  .board-hero .hero-title { font-size: 13px; color: #d3e4fa; }
+  .board-hero .hero-balance { margin-top: 6px; font-size: 32px; font-weight: 700; line-height: 1.1; letter-spacing: -.5px; }
+  .board-hero .hero-alert { flex-shrink: 0; margin-top: 2px; height: 24px; padding: 0 10px; display: inline-flex; align-items: center; border-radius: 999px; background: #fff; color: #D93B3B; font-size: 12px; font-weight: 600; }
+  .board-hero .hero-notify { height: 26px; padding: 0 12px; display: inline-flex; align-items: center; border-radius: 999px; background: #fff; color: #2A78D6; font-size: 12px; font-weight: 600; }
+  .board-metrics { display: grid; grid-template-columns: 1fr 1fr 1fr; margin-top: 16px; padding-top: 14px; border-top: 1px solid #ffffff30; }
+  .board-metrics > div + div { border-left: 1px solid #ffffff30; padding-left: 14px; }
+  .board-metrics span { display: block; color: #d3e4fa; font-size: 11px; }
+  .board-metrics b { display: block; margin-top: 3px; font-size: 17px; }
+
+  .chip { flex-shrink: 0; height: 36px; padding: 0 16px; border-radius: 999px; font-size: 13px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; background: #fff; color: #475467; box-shadow: inset 0 0 0 1px #C9D0DB; transition: all .15s; }
+  .chip.on { background: #2A78D6; color: #fff; box-shadow: 0 6px 14px rgba(42,120,214,.28); }
+  .chip-alert-dot { width: 7px; height: 7px; border-radius: 999px; background: #D93B3B; }
+  .chip-add { flex-shrink: 0; height: 36px; padding: 0 14px; border-radius: 999px; font-size: 13px; font-weight: 600; color: #2A78D6; background: #fff; box-shadow: inset 0 0 0 1px #B5D2FF; display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; }
+  .flow-trend { height: 200px; }
+</style>
+</head>
+<body data-shell="mobile" data-title="库存" data-tabbar="m" class="m-page wholesale-page min-h-screen">
+<main class="px-4 pt-3 space-y-3">
+
+  <div class="flex items-center gap-2 overflow-x-auto no-scrollbar" id="buyerChips" aria-label="选择采购商"></div>
+
+  <div class="seg w-full wholesale-tabs" id="gasSeg">
+    <button class="on flex-1" data-gas="CNG">CNG · m³</button>
+    <button class="flex-1" data-gas="LNG">LNG · kg</button>
+  </div>
+
+  <section class="board-hero">
+    <div class="flex items-start justify-between gap-3">
+      <div class="min-w-0">
+        <p class="hero-title" id="overviewTitle">—</p>
+        <div class="hero-balance" id="inventoryBalance">—</div>
+      </div>
+      <div class="shrink-0 flex flex-col items-end gap-2 hidden" id="alertActions">
+        <span class="hero-alert">低于预警</span>
+        <button class="hero-notify" type="button" id="notifySelected">短信通知</button>
+      </div>
+    </div>
+    <div class="board-metrics">
+      <div><span>已入库</span><b id="incomingTotal">—</b></div>
+      <div><span>已出气</span><b id="outgoingTotal">—</b></div>
+      <div><span>调整</span><b id="adjustmentTotal">—</b></div>
+    </div>
+  </section>
+
+  <section class="card p-4">
+    <div class="flex items-center justify-between mb-2"><h2 class="font-semibold">进出气趋势</h2><span class="text-xs text-ink-500">近 7 日</span></div>
+    <div id="flowTrend" class="flow-trend" role="img" aria-label="近七日进气出气趋势"></div>
+  </section>
+
+  <div class="seg w-full wholesale-tabs" id="flowTabs">
+    <button class="on flex-1" data-tab="incoming">进气</button>
+    <button class="flex-1" data-tab="outgoing">出气</button>
+    <button class="flex-1" data-tab="adjustments">调整</button>
+  </div>
+  <section id="incomingPane" class="card">
+    <div class="px-4 pt-4 pb-2"><h2 class="font-semibold">进气记录</h2></div>
+    <ul id="incomingList" class="divide-y divide-ink-100 text-sm"></ul>
+  </section>
+  <section id="outgoingPane" class="card" hidden>
+    <div class="px-4 pt-4 pb-2"><h2 class="font-semibold">出气记录</h2></div>
+    <ul id="outgoingList" class="divide-y divide-ink-100 text-sm"></ul>
+  </section>
+  <section id="adjustmentsPane" class="card" hidden>
+    <div class="px-4 pt-4 pb-2"><h2 class="font-semibold">调整记录</h2></div>
+    <ul id="adjustmentList" class="divide-y divide-ink-100 text-sm"></ul>
+  </section>
+
+  <section class="card" id="legacySection" hidden>
+    <button type="button" class="w-full px-4 py-3 flex items-center justify-between text-left" id="legacyToggle">
+      <span class="text-sm font-semibold"><i class="fa-solid fa-link text-brand-500 mr-1"></i>待归属历史记录</span>
+      <span class="tag-warn" id="legacyCount">0</span>
+    </button>
+    <div id="legacyBody" hidden>
+      <p class="px-4 pb-2 text-xs text-ink-500">历史记录未关联有效进气批次，未计入库存；请核对后指定进气批次。</p>
+      <ul id="legacyList" class="divide-y divide-ink-100 text-sm"></ul>
+    </div>
+  </section>
+
+  <p class="px-1 text-[11px] leading-5 text-ink-500">出气由客户加气后自动扣减（当前为演示数据）；登记进气与库存调整请前往底部「管理」。</p>
+</main>
+
+<div class="sheet" id="assignSheet" role="dialog" aria-modal="true" aria-label="确认历史记录归属">
+  <div class="flex items-center justify-between px-4 h-12 border-b border-ink-100"><b>确认历史记录归属</b><button data-close aria-label="关闭"><i class="fa-solid fa-xmark text-ink-500"></i></button></div>
+  <form id="assignForm" class="p-4 pb-8 space-y-3">
+    <p id="assignSummary" class="text-sm"></p>
+    <label class="block"><span class="label">归属采购商</span><select id="assignBuyer" class="field h-11" required></select></label>
+    <label class="block"><span class="label">归属进气批次</span><select id="assignBatch" class="field h-11" required></select></label>
+    <p class="text-xs text-ink-500">仅可关联相同采购商和气种的进气批次；确认后该记录将计入该批次库存。</p>
+    <button class="btn-primary btn-lg w-full" type="submit">确认归属</button>
+  </form>
+</div>
+<script src="assets/vendor/echarts.min.js"></script>
+<script src="assets/js/common.js?v=h5-layout-2"></script>
+<script src="assets/js/owner-store.js"></script>
+<script>
+  let legacyRecord = null, selectedBuyer = null, selectedGas = 'CNG', currentTab = 'incoming';
+  let trendChart = null;
+  const unitFor = gas => gas === 'LNG' ? 'kg' : 'm³';
+  const timeFor = value => value ? new Date(value).toLocaleString('zh-CN', { hour12: false }) : '—';
+  function run(action) {
+    try { return action(); } catch (error) { console.error('管理员原型操作失败', error); toast(error.message); }
+  }
+  function empty(list, message) {
+    const row = document.createElement('li');
+    row.className = 'px-4 py-8 text-center text-ink-500';
+    row.textContent = message;
+    list.appendChild(row);
+  }
+  function row(list, title, detail, result, action, actionLabel = '调整') {
+    const item = document.createElement('li'), wrapper = document.createElement('div'), left = document.createElement('span'), heading = document.createElement('b'), meta = document.createElement('span'), right = document.createElement('span');
+    wrapper.className = 'px-4 py-3 flex items-start justify-between gap-3';
+    left.className = 'min-w-0';
+    heading.className = 'block';
+    heading.textContent = title;
+    meta.className = 'block text-xs text-ink-500 mt-1';
+    meta.textContent = detail;
+    left.append(heading, meta);
+    right.className = 'text-right shrink-0';
+    right.textContent = result;
+    if (action) {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'block text-xs text-brand-600 mt-2';
+      button.textContent = actionLabel;
+      button.addEventListener('click', action);
+      right.appendChild(button);
+    }
+    wrapper.append(left, right);
+    item.appendChild(wrapper);
+    list.appendChild(item);
+  }
+  function buyerOptions(select, buyers, selected) {
+    select.replaceChildren(...buyers.map(buyer => new Option(buyer.name, buyer.id)));
+    if (buyers.some(buyer => buyer.id === selected)) select.value = selected;
+  }
+  function renderTrend(data, buyerId, gas) {
+    const el = document.getElementById('flowTrend');
+    if (!el || !window.echarts) return;
+    const days = [];
+    for (let i = 6; i >= 0; i--) { const d = new Date(); d.setDate(d.getDate() - i); days.push(OwnerStore.dateKey(d)); }
+    const labels = days.map(day => day.slice(5));
+    const sumByDay = (list, field) => days.map(day => Math.round(list.filter(item => item.buyerId === buyerId && item.gas === gas && OwnerStore.dateKey(item[field]) === day).reduce((s, item) => s + Number(item.qty), 0) * 100) / 100);
+    const option = {
+      legend: { show: true },
+      tooltip: { trigger: 'axis' },
+      xAxis: { type: 'category', data: labels, boundaryGap: false },
+      yAxis: { type: 'value', name: unitFor(gas) },
+      series: [
+        { name: '进气', type: 'line', smooth: true, symbolSize: 6, data: sumByDay(data.receipts, 'receivedAt'), areaStyle: { opacity: 0.12 } },
+        { name: '出气', type: 'line', smooth: true, symbolSize: 6, data: sumByDay(data.outflows.filter(f => f.status === 'completed'), 'occurredAt'), areaStyle: { opacity: 0.12 } }
+      ]
+    };
+    if (!trendChart) trendChart = makeChart(el, option);
+    else trendChart.setOption(option);
+  }
+  function render() {
+    const data = OwnerStore.read();
+
+    // 预警的采购商（用于 chips 红点标记）
+    const alerts = OwnerStore.alertsFor(data);
+    const alertedBuyerIds = new Set(alerts.map(a => a.buyer.id));
+
+    // 采购商选择（横向 chips，带预警圆点）
+    if (!data.buyers.some(buyer => buyer.id === selectedBuyer)) selectedBuyer = data.buyers[0] ? data.buyers[0].id : null;
+    const chips = $('#buyerChips');
+    chips.replaceChildren(...data.buyers.map(buyer => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'chip' + (buyer.id === selectedBuyer ? ' on' : '');
+      if (alertedBuyerIds.has(buyer.id)) {
+        const dot = document.createElement('span');
+        dot.className = 'chip-alert-dot';
+        button.append(dot);
+      }
+      button.append(buyer.name);
+      button.dataset.buyer = buyer.id;
+      return button;
+    }), (() => {
+      const a = document.createElement('a');
+      a.className = 'chip-add';
+      a.href = 'm-buyers.html';
+      a.innerHTML = '<i class="fa-solid fa-plus"></i>新增';
+      return a;
+    })());
+
+    // 气种切换高亮
+    $$('#gasSeg button').forEach(button => button.classList.toggle('on', button.dataset.gas === selectedGas));
+
+    // 采购商库存概览（hero）
+    const buyer = data.buyers.find(item => item.id === selectedBuyer);
+    const unit = unitFor(selectedGas);
+    const totals = selectedBuyer ? OwnerStore.inventory(data, selectedBuyer, selectedGas) : null;
+    $('#overviewTitle').textContent = buyer ? `${buyer.name} · ${selectedGas}` : '请先新增采购商';
+    $('#inventoryBalance').textContent = totals ? `${fmt(totals.balance, 2)} ${unit}` : '—';
+    $('#incomingTotal').textContent = totals ? fmt(totals.incoming, 2) : '—';
+    $('#outgoingTotal').textContent = totals ? fmt(totals.outgoing, 2) : '—';
+    $('#adjustmentTotal').textContent = totals ? (totals.adjustment > 0 ? '+' : '') + fmt(totals.adjustment, 2) : '—';
+    const threshold = buyer && buyer.alerts ? Number(buyer.alerts[selectedGas]) : 0;
+    const low = totals && threshold > 0 && totals.incoming > 0 && totals.balance <= threshold;
+    $('#alertActions').classList.toggle('hidden', !low);
+    renderTrend(data, selectedBuyer, selectedGas);
+
+    // 流水 tab
+    $$('#flowTabs button').forEach(button => button.classList.toggle('on', button.dataset.tab === currentTab));
+    $('#incomingPane').hidden = currentTab !== 'incoming';
+    $('#outgoingPane').hidden = currentTab !== 'outgoing';
+    $('#adjustmentsPane').hidden = currentTab !== 'adjustments';
+
+    // 进气（只读已入库记录）
+    const incoming = data.receipts.filter(receipt => receipt.buyerId === selectedBuyer && receipt.gas === selectedGas).slice().reverse();
+    const incomingList = $('#incomingList');
+    incomingList.replaceChildren();
+    if (!incoming.length) empty(incomingList, '暂无该气种的进气记录');
+    incoming.forEach(receipt => {
+      const batch = data.batches.find(item => item.id === receipt.purchaseBatchId);
+      const balance = OwnerStore.receiptInventory(data, receipt).balance;
+      row(incomingList, `${receipt.id}${receipt.demo ? ' · 演示' : ''}`, `${batch ? batch.id + ' · ' : ''}${buyer ? buyer.name : ''} · 入库 ${timeFor(receipt.receivedAt)} · 余量 ${fmt(balance, 2)} ${unit}`, `${fmt(receipt.qty, 2)} ${unit}`, () => {
+        location.href = 'm-buyers.html?adjust=' + encodeURIComponent(receipt.id);
+      }, '调整');
+    });
+
+    const linked = item => Boolean(item.batchId && data.receipts.some(receipt => receipt.id === item.batchId && receipt.buyerId === item.buyerId && receipt.gas === item.gas));
+
+    // 出气（只读）
+    const outgoing = data.outflows.filter(flow => linked(flow) && flow.buyerId === selectedBuyer && flow.gas === selectedGas).slice().reverse();
+    const outgoingList = $('#outgoingList');
+    outgoingList.replaceChildren();
+    if (!outgoing.length) empty(outgoingList, '暂无本地出气记录');
+    outgoing.forEach(flow => row(outgoingList, `${flow.id}${flow.demo ? ' · 演示' : ''}`, `${flow.batchId} · ${timeFor(flow.occurredAt)}`, `${fmt(flow.qty, 2)} ${unit} · ${flow.status === 'completed' ? '已出气' : '待出气'}`));
+
+    // 调整（只读）
+    const adjustments = data.adjustments.filter(item => linked(item) && item.buyerId === selectedBuyer && item.gas === selectedGas).slice().reverse();
+    const adjustmentList = $('#adjustmentList');
+    adjustmentList.replaceChildren();
+    if (!adjustments.length) empty(adjustmentList, '暂无库存调整记录');
+    adjustments.forEach(item => row(adjustmentList, item.amount > 0 ? '库存调增' : '库存调减', `${item.batchId} · ${timeFor(item.createdAt)} · ${item.reason}`, `${item.amount > 0 ? '+' : ''}${fmt(item.amount, 2)} ${unit}`));
+
+    // 待归属历史记录（默认收起）
+    const legacy = [
+      ...data.adjustments.filter(item => !linked(item)).map(item => ({ kind: 'adjustments', item })),
+      ...data.outflows.filter(item => !linked(item)).map(item => ({ kind: 'outflows', item }))
+    ];
+    $('#legacySection').hidden = !legacy.length;
+    $('#legacyCount').textContent = legacy.length;
+    const legacyList = $('#legacyList');
+    legacyList.replaceChildren();
+    legacy.forEach(({ kind, item }) => {
+      const isAdjustment = kind === 'adjustments', amount = isAdjustment ? item.amount : item.qty;
+      const title = isAdjustment ? '历史库存调整' : '历史出气记录';
+      const detail = isAdjustment ? item.reason : (item.demo ? '演示记录' : '出气记录');
+      const buyerFor = data.buyers.find(entry => entry.id === item.buyerId);
+      const action = item.id && !item.batchId && data.buyers.length && (!item.buyerId || buyerFor) ? () => {
+        legacyRecord = { kind, item: { ...item } };
+        $('#assignSummary').textContent = `${title} · ${item.gas} · ${fmt(amount, 2)} ${unitFor(item.gas)} · ${detail}`;
+        buyerOptions($('#assignBuyer'), data.buyers, '');
+        $('#assignBuyer').insertBefore(new Option('请选择采购商', ''), $('#assignBuyer').firstChild);
+        $('#assignBuyer').value = item.buyerId || '';
+        $('#assignBuyer').disabled = Boolean(item.buyerId);
+        updateAssignBatches();
+        openLayer('#assignSheet');
+      } : null;
+      row(legacyList, title, `${detail} · ${buyerFor ? buyerFor.name : '采购商未归属'} · ${item.batchId ? '进气批次归属异常，请核对原记录' : '进气批次未归属'}`, `${fmt(amount, 2)} ${unitFor(item.gas)}`, action, '指定批次');
+    });
+  }
+  $('#buyerChips').addEventListener('click', e => { const button = e.target.closest('[data-buyer]'); if (!button) return; selectedBuyer = button.dataset.buyer; run(render); });
+  $('#gasSeg').addEventListener('click', e => { const button = e.target.closest('[data-gas]'); if (!button) return; selectedGas = button.dataset.gas; run(render); });
+  $('#flowTabs').addEventListener('click', e => { const button = e.target.closest('[data-tab]'); if (!button) return; currentTab = button.dataset.tab; run(render); });
+  $('#legacyToggle').addEventListener('click', () => { $('#legacyBody').hidden = !$('#legacyBody').hidden; });
+  function updateAssignBatches() {
+    const data = OwnerStore.read(), buyerId = $('#assignBuyer').value;
+    const receipts = data.receipts.filter(receipt => receipt.buyerId === buyerId && receipt.gas === legacyRecord.item.gas);
+    $('#assignBatch').replaceChildren(new Option(receipts.length ? '请选择进气批次' : '暂无可选进气批次', ''), ...receipts.map(receipt => new Option(`${receipt.id} · ${fmt(receipt.qty, 2)} ${unitFor(receipt.gas)} · ${timeFor(receipt.receivedAt)}`, receipt.id)));
+    $('#assignBatch').value = '';
+  }
+  $('#assignBuyer').addEventListener('change', () => run(updateAssignBatches));
+  $('#notifySelected').addEventListener('click', () => {
+    const buyer = OwnerStore.read().buyers.find(item => item.id === selectedBuyer);
+    if (!buyer) return toast('采购商不存在，请刷新后重试');
+    toast(`已向 ${buyer.name}（${buyer.phone || '未留电话'}）发送 ${selectedGas} 库存预警短信（模拟）`);
+  });
+  $('#assignForm').addEventListener('submit', e => {
+    e.preventDefault();
+    run(() => {
+      OwnerStore.assignLegacy(legacyRecord.kind, legacyRecord.item, $('#assignBatch').value);
+      selectedBuyer = $('#assignBuyer').value;
+      legacyRecord = null;
+      render();
+      closeLayers();
+      toast('已记录采购商归属');
+    });
+  });
+  window.addEventListener('pageshow', () => run(render));
+  window.addEventListener('storage', e => { if (e.key === OwnerStore.key || e.key === null) run(render); });
+  run(render);
+</script>
+</body>
+</html>

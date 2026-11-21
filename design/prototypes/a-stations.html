@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>站点与枪号 · 采购方后台</title>
+<link rel="stylesheet" href="assets/tailwind.css">
+<link rel="stylesheet" href="assets/vendor/fontawesome/css/all.min.css">
+</head>
+<body data-shell="admin" data-crumb="采购与资源/站点与枪号">
+<main id="main" class="p-6 space-y-4">
+  <div class="flex items-center justify-between">
+    <div><h1 class="text-xl font-bold">站点与枪号</h1><p class="text-sm text-ink-500 mt-0.5">维护扫码、订单归属和采购对账所需的基础信息，不替代加气站站务管理</p></div>
+    <button class="btn-primary" data-toast="原型：新增合作站点基础信息"><i class="fa-solid fa-plus"></i>新增站点</button>
+  </div>
+  <section class="card">
+    <table class="tbl">
+      <thead><tr><th>站点</th><th>地址</th><th>气种</th><th class="num">支付二维码</th><th>枪号信息</th><th>状态</th><th>操作</th></tr></thead>
+      <tbody>
+        <tr><td class="font-medium">高新区油气合建站</td><td>高新区科创大道 188 号</td><td><span class="tag-cng">CNG</span> <span class="tag-lng">LNG</span></td><td class="num">1 个</td><td>6 把枪</td><td><span class="tag-ok">启用</span></td><td class="text-brand-500"><button data-open="#detail">站点码 / 枪号</button></td></tr>
+        <tr><td class="font-medium">城北 CNG 加气站</td><td>城北工业园 20 号</td><td><span class="tag-cng">CNG</span></td><td class="num">1 个</td><td>4 把枪</td><td><span class="tag-ok">启用</span></td><td class="text-brand-500"><button data-open="#detail">站点码 / 枪号</button></td></tr>
+        <tr><td class="font-medium">港区 LNG 物流站</td><td>港区物流大道 6 号</td><td><span class="tag-lng">LNG</span></td><td class="num">1 个</td><td>6 把枪</td><td><span class="tag-ok">启用</span></td><td class="text-brand-500"><button data-open="#detail">站点码 / 枪号</button></td></tr>
+      </tbody>
+    </table>
+  </section>
+</main>
+<aside class="drawer" id="detail" role="dialog" aria-label="站点支付码与枪号">
+  <div class="h-14 px-5 flex items-center justify-between border-b border-ink-100"><b>站点支付码与枪号</b><button data-close aria-label="关闭"><i class="fa-solid fa-xmark text-ink-500"></i></button></div>
+  <div class="flex-1 overflow-y-auto p-5 space-y-4 text-sm">
+    <div class="flex items-center gap-4 rounded-xl bg-page p-4"><div class="w-28 h-28 p-2 rounded-lg bg-white ring-1 ring-ink-100" data-qr="33"></div><div><b>高新区油气合建站</b><p class="text-xs text-ink-500 mt-1">消费者扫码识别站点，后续选择枪号并支付</p><button class="btn-ghost btn-sm mt-3" data-toast="原型：下载本站支付二维码">下载二维码</button></div></div>
+    <div class="rounded-lg bg-amber-50 text-amber-800 text-xs p-3">二维码为演示示意图，不可实际收款。实际二维码需关联采购方拉卡拉商户的支付下单流程。</div>
+    <div><label class="label">枪号与气种</label><table class="tbl"><thead><tr><th>枪号</th><th>气种</th><th>销售单价</th></tr></thead><tbody><tr><td>1 号枪</td><td>CNG</td><td>¥3.90/m³</td></tr><tr><td>5 号枪</td><td>LNG</td><td>¥4.98/kg</td></tr></tbody></table></div>
+  </div>
+  <div class="h-16 px-5 border-t border-ink-100 flex items-center justify-end"><button class="btn-ghost" data-close>关闭</button></div>
+</aside>
+<script src="assets/js/common.js"></script>
+</body>
+</html>

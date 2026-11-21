@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>销售价格 · 采购方后台</title>
+<link rel="stylesheet" href="assets/tailwind.css">
+<link rel="stylesheet" href="assets/vendor/fontawesome/css/all.min.css">
+</head>
+<body data-shell="admin" data-crumb="采购与资源/销售价格">
+<main id="main" class="p-6 space-y-4">
+  <div class="flex items-center justify-between">
+    <div><h1 class="text-xl font-bold">销售价格</h1><p class="text-sm text-ink-500 mt-0.5">按站点、枪号和气种维护销售单价；下单时据此计算预计气量</p></div>
+    <button class="btn-primary" data-open="#price"><i class="fa-solid fa-plus"></i>设置价格</button>
+  </div>
+  <div class="rounded-lg bg-brand-50 text-brand-700 text-sm px-4 py-3"><i class="fa-solid fa-circle-info mr-1"></i>预计气量 = 订单金额 ÷ 销售单价，仅作订单记录和参考，不作为加气机实测数据。</div>
+  <section class="card">
+    <div class="px-5 pt-4 pb-3 flex items-center justify-between"><h2 class="font-semibold">当前销售单价</h2><div class="seg"><button class="on">全部</button><button>CNG</button><button>LNG</button></div></div>
+    <table class="tbl">
+      <thead><tr><th>站点</th><th>枪号</th><th>气种</th><th class="num">销售单价</th><th>生效时间</th><th>状态</th><th>操作</th></tr></thead>
+      <tbody>
+        <tr><td>高新区油气合建站</td><td>3 号枪</td><td><span class="tag-cng">CNG</span></td><td class="num font-semibold">¥3.90/m³</td><td>2026-11-01 00:00</td><td><span class="tag-ok">生效中</span></td><td class="text-brand-500"><button data-open="#price">编辑</button></td></tr>
+        <tr><td>城北 CNG 加气站</td><td>1 号枪</td><td><span class="tag-cng">CNG</span></td><td class="num font-semibold">¥3.88/m³</td><td>2026-11-01 00:00</td><td><span class="tag-ok">生效中</span></td><td class="text-brand-500"><button data-open="#price">编辑</button></td></tr>
+        <tr><td>港区 LNG 物流站</td><td>2 号枪</td><td><span class="tag-lng">LNG</span></td><td class="num font-semibold">¥4.98/kg</td><td>2026-10-20 00:00</td><td><span class="tag-ok">生效中</span></td><td class="text-brand-500"><button data-open="#price">编辑</button></td></tr>
+      </tbody>
+    </table>
+  </section>
+</main>
+<aside class="drawer" id="price" role="dialog" aria-label="设置销售价格">
+  <div class="h-14 px-5 flex items-center justify-between border-b border-ink-100"><b>设置销售价格</b><button data-close aria-label="关闭"><i class="fa-solid fa-xmark text-ink-500"></i></button></div>
+  <div class="flex-1 p-5 space-y-4 text-sm">
+    <div><label class="label">站点 / 枪号</label><select class="field"><option>高新区油气合建站 · 3 号枪 · CNG</option></select></div>
+    <div><label class="label">单价（元/m³）</label><input class="field" value="3.90"></div>
+    <div><label class="label">生效时间</label><input class="field" value="2026-11-13 00:00"></div>
+    <div class="rounded-lg bg-amber-50 text-amber-800 text-xs p-3">价格修改不追溯已生成订单；共享库存仍按订单实际站点和气种记账。</div>
+  </div>
+  <div class="h-16 px-5 border-t border-ink-100 flex items-center justify-end gap-2"><button class="btn-ghost" data-close>取消</button><button class="btn-primary" data-close data-toast="销售价格已保存">保存</button></div>
+</aside>
+<script src="assets/js/common.js"></script>
+</body>
+</html>

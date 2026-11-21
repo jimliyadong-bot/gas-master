@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.gas.mapper.GasCouponMapper">
+    <resultMap type="GasCoupon" id="GasCouponResult">
+        <id property="couponId" column="coupon_id"/>
+        <result property="templateId" column="template_id"/>
+        <result property="buyerId" column="buyer_id"/>
+        <result property="memberId" column="member_id"/>
+        <result property="faceValue" column="face_value"/>
+        <result property="thresholdAmount" column="threshold_amount"/>
+        <result property="status" column="status"/>
+        <result property="expireAt" column="expire_at"/>
+        <result property="usedOrderId" column="used_order_id"/>
+        <result property="usedAt" column="used_at"/>
+        <result property="issuedBy" column="issued_by"/>
+        <result property="createTime" column="create_time"/>
+        <result property="templateName" column="template_name"/>
+        <result property="buyerName" column="buyer_name"/>
+        <result property="memberPhone" column="member_phone"/>
+        <result property="orderNo" column="order_no"/>
+        <result property="orderStatus" column="order_status"/>
+    </resultMap>
+
+    <sql id="selectCouponVo">
+        select c.coupon_id,c.template_id,c.buyer_id,c.member_id,c.face_value,c.threshold_amount,
+            c.expire_at,c.used_order_id,c.used_at,c.issued_by,c.create_time,
+            t.name template_name,b.buyer_name,m.phone member_phone,o.order_no,o.status order_status,
+            case when c.status='UNUSED' and c.expire_at&lt;=sysdate() then 'EXPIRED' else c.status end status
+        from gas_coupon c
+        join gas_coupon_template t on c.template_id=t.template_id
+        join gas_buyer b on c.buyer_id=b.buyer_id
+        join gas_member m on c.member_id=m.member_id
+        left join gas_order o on c.used_order_id=o.order_id
+    </sql>
+
+    <sql id="statusFilter">
+        <if test="status == 'EXPIRED'">
+            and (c.status='EXPIRED' or (c.status='UNUSED' and c.expire_at&lt;=sysdate()))
+        </if>
+        <if test="status != null and status != '' and status != 'EXPIRED'">
+            and c.status=#{status}
+            <if test="status == 'UNUSED'">and c.expire_at&gt;sysdate()</if>
+        </if>
+    </sql>
+
+    <select id="selectCouponList" parameterType="GasCoupon" resultMap="GasCouponResult">
+        <include refid="selectCouponVo"/>
+        <where>
+            <if test="couponId != null">and c.coupon_id=#{couponId}</if>
+            <if test="templateId != null">and c.template_id=#{templateId}</if>
+            <if test="buyerId != null">and c.buyer_id=#{buyerId}</if>
+            <if test="memberPhone != null and memberPhone != ''">and m.phone=#{memberPhone}</if>
+            <include refid="statusFilter"/>
+        </where>
+        order by c.coupon_id desc
+    </select>
+
+    <select id="selectMemberCoupons" resultMap="GasCouponResult">
+        <include refid="selectCouponVo"/>
+        where c.member_id=#{memberId}
+        <include refid="statusFilter"/>
+        order by c.coupon_id desc
+    </select>
+
+    <select id="selectAvailable" resultMap="GasCouponResult">
+        <include refid="selectCouponVo"/>
+        where c.member_id=#{memberId} and c.buyer_id=#{buyerId} and c.status='UNUSED'
+          and c.expire_at&gt;sysdate() and c.threshold_amount&lt;=#{orderAmount} and c.face_value&lt;#{orderAmount}
+        order by c.expire_at,c.coupon_id
+    </select>
+
+    <select id="selectCouponByIdForUpdate" parameterType="Long" resultMap="GasCouponResult">
+        select coupon_id,template_id,buyer_id,member_id,face_value,threshold_amount,status,expire_at,
+            used_order_id,used_at,issued_by,create_time
+        from gas_coupon where coupon_id=#{couponId} for update
+    </select>
+
+    <insert id="insertCoupon" parameterType="GasCoupon" useGeneratedKeys="true" keyProperty="couponId">
+        insert into gas_coupon(template_id,buyer_id,member_id,face_value,threshold_amount,status,expire_at,issued_by,create_time)
+        values(#{templateId},#{buyerId},#{memberId},#{faceValue},#{thresholdAmount},'UNUSED',#{expireAt},#{issuedBy},sysdate())
+    </insert>
+
+    <update id="occupy">
+        update gas_coupon set status='USED',used_order_id=#{orderId},used_at=sysdate()
+        where coupon_id=#{couponId} and status='UNUSED' and expire_at&gt;sysdate() and used_order_id is null
+    </update>
+
+    <update id="release">
+        update gas_coupon
+        set status=case when expire_at&gt;sysdate() then 'UNUSED' else 'EXPIRED' end,
+            used_order_id=case when expire_at&gt;sysdate() then null else used_order_id end,
+            used_at=case when expire_at&gt;sysdate() then null else used_at end
+        where coupon_id=#{couponId} and used_order_id=#{orderId} and status='USED'
+    </update>
+
+    <update id="expireUnused">
+        update gas_coupon set status='EXPIRED' where status='UNUSED' and expire_at&lt;=sysdate()
+    </update>
+</mapper>

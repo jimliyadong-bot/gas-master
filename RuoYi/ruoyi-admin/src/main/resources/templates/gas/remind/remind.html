@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org">
+<head>
+	<th:block th:include="include :: header('提醒记录')" />
+</head>
+<body class="gray-bg">
+	<div class="container-div">
+		<div class="row">
+			<div class="col-sm-12 search-collapse">
+				<form id="remind-form">
+					<div class="select-list">
+						<ul>
+							<li>类型：<select name="remindType">
+									<option value="">所有</option>
+									<option th:each="dict : ${@dict.getType('gas_remind_type')}" th:text="${dict.dictLabel}" th:value="${dict.dictValue}"></option>
+								</select></li>
+							<li>状态：<select name="status">
+									<option value="">所有</option>
+									<option value="PENDING">待发送</option>
+									<option value="SENT">已发送</option>
+									<option value="FAILED">发送失败</option>
+								</select></li>
+							<li>批次号：<input type="text" name="batchNo"></li>
+							<li>
+								<a class="btn btn-primary btn-rounded btn-sm" onclick="$.table.search()"><i class="fa fa-search"></i>&nbsp;搜索</a>
+								<a class="btn btn-warning btn-rounded btn-sm" onclick="$.form.reset()"><i class="fa fa-refresh"></i>&nbsp;重置</a>
+							</li>
+						</ul>
+					</div>
+				</form>
+			</div>
+
+			<div class="col-sm-12 select-table table-striped">
+				<table id="bootstrap-table"></table>
+			</div>
+		</div>
+	</div>
+	<th:block th:include="include :: footer" />
+	<script th:inline="javascript">
+		var prefix = ctx + "gas/remind";
+		var remindTypeDatas = [[${@dict.getType('gas_remind_type')}]];
+
+		$(function() {
+			var options = {
+				url: prefix + "/list",
+				modalName: "提醒记录",
+				columns: [
+				{ field: 'createTime', title: '触发时间' },
+				{ field: 'remindType', title: '类型', align: 'center', formatter: function(v, row) {
+						var it = remindTypeDatas.find(function(d) { return d.dictValue === v; });
+						var cls = { 'BATCH_EMPTY': 'danger', 'BATCH_UNINVOICED': 'danger', 'STOCK_ALERT': 'warning', 'BATCH_NEAR_EMPTY': 'warning' }[v] || 'default';
+						var label = it ? it.dictLabel : v;
+						return '<span class="label label-' + cls + '">' + label + '</span>';
+					} },
+				{ field: 'buyerName', title: '采购商' },
+				{ field: 'stationName', title: '所属站点' },
+				{ field: 'batchNo', title: '批次号', formatter: function(v) { return v || '-'; } },
+				{ field: 'seq', title: '第几次', align: 'center' },
+				{ field: 'content', title: '提醒内容' },
+				{ field: 'planSendAt', title: '计划发送' },
+				{ field: 'status', title: '状态', align: 'center', formatter: function(v) {
+						var map = { 'PENDING': ['待发送', 'info'], 'SENT': ['已发送', 'success'], 'FAILED': ['发送失败', 'danger'] };
+						var it = map[v] || [v, 'default'];
+						return '<span class="label label-' + it[1] + '">' + it[0] + '</span>';
+					} }]
+			};
+			$.table.init(options);
+		});
+	</script>
+</body>
+</html>

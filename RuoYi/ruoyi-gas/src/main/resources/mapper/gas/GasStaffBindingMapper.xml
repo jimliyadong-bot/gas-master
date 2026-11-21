@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.gas.mapper.GasStaffBindingMapper">
+
+	<resultMap type="GasStaffBinding" id="GasStaffBindingResult">
+		<id     property="bindingId"   column="binding_id"   />
+		<result property="userId"      column="user_id"      />
+		<result property="openid"      column="openid"       />
+		<result property="stationId"   column="station_id"   />
+		<result property="boundAt"     column="bound_at"     />
+		<result property="stationName" column="station_name" />
+		<result property="userName"    column="user_name"    />
+	</resultMap>
+
+	<select id="selectByOpenid" parameterType="String" resultMap="GasStaffBindingResult">
+		select b.binding_id, b.user_id, b.openid, b.station_id, b.bound_at,
+		       s.station_name, u.user_name
+		from gas_staff_binding b
+		left join gas_station s on b.station_id = s.station_id
+		left join sys_user u on b.user_id = u.user_id
+		where b.openid = #{openid}
+	</select>
+
+	<select id="selectByUserId" parameterType="Long" resultMap="GasStaffBindingResult">
+		select binding_id, user_id, openid, station_id, bound_at
+		from gas_staff_binding
+		where user_id = #{userId}
+	</select>
+
+	<update id="updateOpenid">
+		update gas_staff_binding
+		set openid = #{openid}, station_id = #{stationId}, bound_at = sysdate()
+		where user_id = #{userId}
+	</update>
+
+	<insert id="insertBinding" parameterType="GasStaffBinding" useGeneratedKeys="true" keyProperty="bindingId">
+		insert into gas_staff_binding(
+			user_id, openid, station_id, bound_at
+		)values(
+			#{userId}, #{openid}, #{stationId}, sysdate()
+		)
+	</insert>
+
+</mapper>
